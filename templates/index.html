@@ -171,14 +171,18 @@
             <div class="row">
                 <div class="col-md-6">
                     <p class="text-muted">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Updates automatically every hour. IPs older than 1 week are automatically removed.
+                        <i class="fas fa-sync me-2"></i>
+                        {% if last_update %}
+                            Last updated: {{ last_update.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+                        {% else %}
+                            Last update: Never
+                        {% endif %}
                     </p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <p class="text-muted">
-                        <i class="fas fa-shield-alt me-2"></i>
-                        Powered by Fail2ban & Flask
+                        <i class="fas fa-code me-2"></i>
+                        Powered by Mohafabode
                     </p>
                 </div>
             </div>
