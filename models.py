@@ -1,12 +1,25 @@
 from datetime import datetime
 
-def create_banned_ip_model(db):
-    """Factory function to create BannedIP model"""
+# Global variable to store the model class once created
+_banned_ip_model = None
+
+def get_banned_ip_model(db):
+    """Get or create the BannedIP model using a singleton pattern"""
+    global _banned_ip_model
     
-    # Check if model already exists
-    if hasattr(db.Model, 'registry') and 'BannedIP' in db.Model.registry._class_registry:
-        return db.Model.registry._class_registry['BannedIP']
+    if _banned_ip_model is not None:
+        return _banned_ip_model
     
+    # Try to get existing model from SQLAlchemy registry
+    try:
+        existing_model = db.Model.registry._class_registry.get('BannedIP')
+        if existing_model is not None:
+            _banned_ip_model = existing_model
+            return _banned_ip_model
+    except (AttributeError, KeyError):
+        pass
+    
+    # Create the model class
     class BannedIP(db.Model):
         """Model for storing banned IP addresses from Fail2ban"""
         __tablename__ = 'banned_ip'
@@ -22,7 +35,7 @@ def create_banned_ip_model(db):
             db.Index('idx_banned_at', 'banned_at'),
             {'extend_existing': True}
         )
-    
+        
         def __repr__(self):
             return f'<BannedIP {self.ip_address} in {self.jail}>'
         
@@ -36,4 +49,5 @@ def create_banned_ip_model(db):
                 'abuse_url': f"https://abuseipdb.com/check/{self.ip_address}"
             }
     
-    return BannedIP
+    _banned_ip_model = BannedIP
+    return _banned_ip_model

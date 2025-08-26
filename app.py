@@ -38,8 +38,8 @@ scheduler = BackgroundScheduler()
 
 def get_banned_ip_model():
     """Safely get or create the BannedIP model"""
-    from models import create_banned_ip_model
-    return create_banned_ip_model(db)
+    from models import get_banned_ip_model as get_model
+    return get_model(db)
 
 def update_banned_ips():
     """Background task to update banned IPs from Fail2ban"""
@@ -177,7 +177,7 @@ if __name__ != '__main__':
     with app.app_context():
         try:
             # Import models to register them
-            from models import BannedIP
+            BannedIP = get_banned_ip_model()
             db.create_all()
             
             # Run initial update
@@ -203,7 +203,7 @@ atexit.register(lambda: scheduler.shutdown())
 if __name__ == '__main__':
     # This runs when running directly (not via Gunicorn)
     with app.app_context():
-        from models import BannedIP
+        BannedIP = get_banned_ip_model()
         db.create_all()
         
         # Run initial update
