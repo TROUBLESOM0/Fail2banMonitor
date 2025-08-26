@@ -3,6 +3,7 @@ from app import db
 
 class BannedIP(db.Model):
     """Model for storing banned IP addresses from Fail2ban"""
+    __tablename__ = 'banned_ip'
     
     id = db.Column(db.Integer, primary_key=True)
     ip_address = db.Column(db.String(45), nullable=False)  # Support IPv4 and IPv6
