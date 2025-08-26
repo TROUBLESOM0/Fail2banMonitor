@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fail2ban Banned IPs Monitor</title>
+    
+    <!-- Bootstrap CSS - Replit Dark Theme -->
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+</head>
+<body>
+    <div class="container my-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="display-4 mb-3">
+                    <i class="fas fa-shield-alt text-warning me-3"></i>
+                    Fail2ban Banned IPs Monitor
+                </h1>
+                
+                <!-- Status Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-server me-2"></i>
+                                    Service Status
+                                </h5>
+                                {% if service_status.running %}
+                                    <span class="badge bg-success fs-6">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        Running
+                                    </span>
+                                    {% if service_status.version %}
+                                        <small class="text-muted d-block mt-1">{{ service_status.version }}</small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-danger fs-6">
+                                        <i class="fas fa-exclamation-circle me-1"></i>
+                                        Not Running
+                                    </span>
+                                    <small class="text-muted d-block mt-1">{{ service_status.error }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-ban me-2"></i>
+                                    Banned IPs
+                                </h5>
+                                <span class="badge bg-info fs-6">
+                                    <i class="fas fa-list me-1"></i>
+                                    {{ banned_ips|length }} IPs
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-clock me-2"></i>
+                                    Last Update
+                                </h5>
+                                {% if last_update %}
+                                    <small class="text-muted">{{ last_update.strftime('%Y-%m-%d %H:%M:%S UTC') }}</small>
+                                {% else %}
+                                    <small class="text-muted">Never</small>
+                                {% endif %}
+                                <div class="mt-2">
+                                    <button id="refreshBtn" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-sync-alt me-1"></i>
+                                        Refresh Now
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Area -->
+        <div id="alertArea"></div>
+
+        <!-- Banned IPs Table -->
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-table me-2"></i>
+                            Currently Banned IP Addresses
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if banned_ips %}
+                            <div class="table-responsive">
+                                <table id="bannedIpsTable" class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>IP Address</th>
+                                            <th>Jail</th>
+                                            <th>Banned Since</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for ip in banned_ips %}
+                                        <tr>
+                                            <td>
+                                                <code class="ip-address">{{ ip.ip_address }}</code>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ ip.jail }}</span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    {{ ip.banned_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <a href="https://abuseipdb.com/check/{{ ip.ip_address }}" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-warning"
+                                                   title="Check threat intelligence on AbuseIPDB">
+                                                    <i class="fas fa-external-link-alt me-1"></i>
+                                                    AbuseIPDB
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                                <h4>No Banned IPs</h4>
+                                <p class="text-muted">
+                                    {% if service_status.running %}
+                                        Great! No IP addresses are currently banned by Fail2ban.
+                                    {% else %}
+                                        Unable to retrieve banned IPs. Please check Fail2ban service status.
+                                    {% endif %}
+                                </p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-5 pt-4 border-top">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="text-muted">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Updates automatically every hour. IPs older than 1 week are automatically removed.
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="text-muted">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Powered by Fail2ban & Flask
+                    </p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery (required for DataTables) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- DataTables JS -->
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
