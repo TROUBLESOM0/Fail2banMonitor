@@ -33,23 +33,28 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 # Initialize the app with the extension
 db.init_app(app)
 
-# Import models once at app level to register them
-with app.app_context():
-    from models import BannedIP
-    db.create_all()
-
-# Initialize scheduler and service
+# Initialize scheduler
 scheduler = BackgroundScheduler()
+
+def get_banned_ip_model():
+    """Safely get or create the BannedIP model"""
+    try:
+        # Try to get existing model from registry
+        return db.Model.registry._class_registry.get('BannedIP')
+    except:
+        return None
 
 def update_banned_ips():
     """Background task to update banned IPs from Fail2ban"""
     try:
         with app.app_context():
-            # Import services here
+            # Import services and models safely
             from fail2ban_service import Fail2banService
             
-            # Get the already registered model
-            BannedIP = db.Model.registry._class_registry['BannedIP']
+            # Get or import model safely
+            BannedIP = get_banned_ip_model()
+            if BannedIP is None:
+                from models import BannedIP
             
             fail2ban_service = Fail2banService()
             logger.info("Starting banned IP update task")
@@ -95,11 +100,13 @@ def update_banned_ips():
 def index():
     """Main page displaying banned IPs"""
     try:
-        # Import services here
+        # Import services and models safely
         from fail2ban_service import Fail2banService
         
-        # Get the already registered model
-        BannedIP = db.Model.registry._class_registry['BannedIP']
+        # Get or import model safely
+        BannedIP = get_banned_ip_model()
+        if BannedIP is None:
+            from models import BannedIP
         
         fail2ban_service = Fail2banService()
         
@@ -129,8 +136,10 @@ def index():
 def api_banned_ips():
     """API endpoint to get banned IPs as JSON"""
     try:
-        # Get the already registered model
-        BannedIP = db.Model.registry._class_registry['BannedIP']
+        # Get or import model safely
+        BannedIP = get_banned_ip_model()
+        if BannedIP is None:
+            from models import BannedIP
         
         banned_ips = BannedIP.query.order_by(BannedIP.banned_at.desc()).all()
         
@@ -171,25 +180,54 @@ def api_refresh():
             'error': str(e)
         }), 500
 
-# Initialize scheduler jobs and start
-with app.app_context():
-    # Run initial update
-    update_banned_ips()
-    
-    # Schedule hourly updates
-    scheduler.add_job(
-        func=update_banned_ips,
-        trigger=IntervalTrigger(hours=1),
-        id='update_banned_ips',
-        name='Update banned IPs from Fail2ban',
-        replace_existing=True
-    )
-    
-    scheduler.start()
-    logger.info("Scheduler started - banned IPs will update hourly")
+# Initialize database and scheduler when app starts
+if __name__ != '__main__':
+    # This runs when imported by Gunicorn
+    with app.app_context():
+        try:
+            # Import models to register them
+            from models import BannedIP
+            db.create_all()
+            
+            # Run initial update
+            update_banned_ips()
+            
+            # Schedule hourly updates
+            scheduler.add_job(
+                func=update_banned_ips,
+                trigger=IntervalTrigger(hours=1),
+                id='update_banned_ips',
+                name='Update banned IPs from Fail2ban',
+                replace_existing=True
+            )
+            
+            scheduler.start()
+            logger.info("Scheduler started - banned IPs will update hourly")
+        except Exception as e:
+            logger.error(f"Error during app initialization: {str(e)}")
 
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
 
 if __name__ == '__main__':
+    # This runs when running directly (not via Gunicorn)
+    with app.app_context():
+        from models import BannedIP
+        db.create_all()
+        
+        # Run initial update
+        update_banned_ips()
+        
+        # Schedule hourly updates
+        scheduler.add_job(
+            func=update_banned_ips,
+            trigger=IntervalTrigger(hours=1),
+            id='update_banned_ips',
+            name='Update banned IPs from Fail2ban',
+            replace_existing=True
+        )
+        
+        scheduler.start()
+        logger.info("Scheduler started - banned IPs will update hourly")
+    
     app.run(host='0.0.0.0', port=5000, debug=True)
