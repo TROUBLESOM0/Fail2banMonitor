@@ -58,18 +58,23 @@
                                         {% for ip in banned_ips %}
                                         <tr>
                                             <td>
-                                                <code class="ip-address">{{ ip.ip_address }}</code>
+                                                <code class="ip-address">{{ ip.ip_address if ip.ip_address else ip['ip_address'] }}</code>
                                             </td>
                                             <td>
-                                                <span class="badge bg-secondary">{{ ip.jail }}</span>
+                                                <span class="badge bg-secondary">{{ ip.jail if ip.jail else ip['jail'] }}</span>
                                             </td>
                                             <td>
                                                 <small class="text-muted">
-                                                    {{ ip.banned_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+                                                    {% set banned_time = ip.banned_at if ip.banned_at else ip['banned_at'] %}
+                                                    {% if banned_time is string %}
+                                                        {{ banned_time[:19] | replace('T', ' ') }} UTC
+                                                    {% else %}
+                                                        {{ banned_time.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+                                                    {% endif %}
                                                 </small>
                                             </td>
                                             <td>
-                                                <a href="https://abuseipdb.com/check/{{ ip.ip_address }}" 
+                                                <a href="https://abuseipdb.com/check/{{ ip.ip_address if ip.ip_address else ip['ip_address'] }}" 
                                                    target="_blank" 
                                                    class="btn btn-sm btn-outline-warning"
                                                    title="Check threat intelligence on AbuseIPDB">
