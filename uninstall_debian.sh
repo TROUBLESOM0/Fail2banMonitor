@@ -94,15 +94,43 @@ echo "sudo gpasswd -d $USER adm"
 
 # Ask about removing system packages
 echo
-read -p "Do you want to remove system packages that were installed? (nginx, postgresql, python3-pip, python3-venv) (y/N): " -n 1 -r
+read -p "Do you want to remove system packages that were installed? (postgresql, python3-pip, python3-venv) (y/N): " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "Removing system packages..."
-    sudo apt remove --purge -y nginx postgresql postgresql-contrib python3-pip python3-venv
+    sudo apt remove --purge -y postgresql postgresql-contrib python3-pip python3-venv
     sudo apt autoremove -y
     echo "System packages removed."
 else
-    echo "System packages kept (recommended if used by other applications)."
+    echo "System packages kept."
+fi
+
+# Ask about removing bulk packages
+echo
+echo "Also, a whole bunch of these others get installed on most systems:::"
+echo " (build-essential cpp dpkg-dev fakeroot g++ g++-12 gcc javascript-common libalgorithm-diff-perl libalgorithm-diff-xs-perl libalgorithm-merge-perl libdpkg-perl libexpat1-dev libfakeroot libfile-fcntllock-perl libjs-jquery libjs-sphinxdoc libjs-underscore libjson-perl libllvm14 libpq5 libpython3-dev libpython3.11 libpython3.11-dev libsensors-config libsensors5 libstdc++-12-dev libxslt1.1 libz3-4 make postgresql postgresql-15 postgresql-client-15 postgresql-client-common postgresql-common postgresql-contrib python3-dev python3-distutils python3-lib2to3 python3-pip python3-pip-whl python3-setuptools python3-setuptools-whl python3-venv python3-wheel python3.11-dev python3.11-venv ssl-cert sysstat zlib1g-dev)"
+read -p "Do you want to remove these: (y/N): " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo "Removing system packages..."
+    sudo apt remove --purge -y build-essential cpp dpkg-dev fakeroot g++ g++-12 gcc javascript-common libalgorithm-diff-perl libalgorithm-diff-xs-perl libalgorithm-merge-perl libdpkg-perl libexpat1-dev libfakeroot libfile-fcntllock-perl libjs-jquery libjs-sphinxdoc libjs-underscore libjson-perl libllvm14 libpq5 libpython3-dev libpython3.11 libpython3.11-dev libsensors-config libsensors5 libstdc++-12-dev libxslt1.1 libz3-4 make postgresql postgresql-15 postgresql-client-15 postgresql-client-common postgresql-common postgresql-contrib python3-dev python3-distutils python3-lib2to3 python3-pip python3-pip-whl python3-setuptools python3-setuptools-whl python3-venv python3-wheel python3.11-dev python3.11-venv ssl-cert sysstat zlib1g-dev
+    sudo apt autoremove -y
+    echo "Bulk packages removed."
+else
+    echo "Bulk packages kept."
+fi
+
+# Ask about removing nginx
+echo
+read -p "Do you want to remove nginx? (y/N): " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo "Stopping and removing nginx..."
+    sudo systemctl stop nginx
+    sudo apt remove --purge -y nginx
+    echo "Nginx removed."
+else
+    echo "Nginx kept."
 fi
 
 # Ask about removing Fail2ban
