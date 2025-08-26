@@ -40,9 +40,14 @@ def update_banned_ips():
     """Background task to update banned IPs from Fail2ban"""
     try:
         with app.app_context():
-            # Import models and services inside the function to avoid circular imports
-            from models import BannedIP
+            # Import services here, but use registry check for models
             from fail2ban_service import Fail2banService
+            
+            # Use the already registered model from the app context
+            BannedIP = db.Model.registry._class_registry.get('BannedIP')
+            if BannedIP is None:
+                # Fallback to import if not found
+                from models import BannedIP
             
             fail2ban_service = Fail2banService()
             logger.info("Starting banned IP update task")
@@ -88,9 +93,13 @@ def update_banned_ips():
 def index():
     """Main page displaying banned IPs"""
     try:
-        # Import models inside route to avoid circular imports
-        from models import BannedIP
+        # Import services and use registry check for models
         from fail2ban_service import Fail2banService
+        
+        # Use the already registered model from the app context
+        BannedIP = db.Model.registry._class_registry.get('BannedIP')
+        if BannedIP is None:
+            from models import BannedIP
         
         fail2ban_service = Fail2banService()
         
@@ -120,8 +129,10 @@ def index():
 def api_banned_ips():
     """API endpoint to get banned IPs as JSON"""
     try:
-        # Import models inside route to avoid circular imports
-        from models import BannedIP
+        # Use the already registered model from the app context
+        BannedIP = db.Model.registry._class_registry.get('BannedIP')
+        if BannedIP is None:
+            from models import BannedIP
         
         banned_ips = BannedIP.query.order_by(BannedIP.banned_at.desc()).all()
         
