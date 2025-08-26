@@ -38,11 +38,8 @@ scheduler = BackgroundScheduler()
 
 def get_banned_ip_model():
     """Safely get or create the BannedIP model"""
-    try:
-        # Try to get existing model from registry
-        return db.Model.registry._class_registry.get('BannedIP')
-    except:
-        return None
+    from models import create_banned_ip_model
+    return create_banned_ip_model(db)
 
 def update_banned_ips():
     """Background task to update banned IPs from Fail2ban"""
@@ -51,10 +48,8 @@ def update_banned_ips():
             # Import services and models safely
             from fail2ban_service import Fail2banService
             
-            # Get or import model safely
+            # Get the model using factory function
             BannedIP = get_banned_ip_model()
-            if BannedIP is None:
-                from models import BannedIP
             
             fail2ban_service = Fail2banService()
             logger.info("Starting banned IP update task")
@@ -103,10 +98,8 @@ def index():
         # Import services and models safely
         from fail2ban_service import Fail2banService
         
-        # Get or import model safely
+        # Get the model using factory function
         BannedIP = get_banned_ip_model()
-        if BannedIP is None:
-            from models import BannedIP
         
         fail2ban_service = Fail2banService()
         
@@ -136,10 +129,8 @@ def index():
 def api_banned_ips():
     """API endpoint to get banned IPs as JSON"""
     try:
-        # Get or import model safely
+        # Get the model using factory function
         BannedIP = get_banned_ip_model()
-        if BannedIP is None:
-            from models import BannedIP
         
         banned_ips = BannedIP.query.order_by(BannedIP.banned_at.desc()).all()
         
