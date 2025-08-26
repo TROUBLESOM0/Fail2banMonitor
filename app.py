@@ -27,10 +27,10 @@ BANNED_IPS_FILE = "banned_ips.json"
 def get_banned_ips_from_fail2ban():
     """Get banned IPs from fail2ban using the specified command"""
     try:
-        # Try without sudo first, then with sudo
+        # Try with sudo first (production), then without sudo (development)
         commands_to_try = [
-            ["fail2ban-client", "get", "sshd", "banip"],
-            ["sudo", "fail2ban-client", "get", "sshd", "banip"]
+            ["sudo", "fail2ban-client", "get", "sshd", "banip"],
+            ["fail2ban-client", "get", "sshd", "banip"]
         ]
         
         for cmd in commands_to_try:
@@ -64,10 +64,10 @@ def get_banned_ips_from_fail2ban():
 def get_all_jails():
     """Get list of all fail2ban jails"""
     try:
-        # Try without sudo first, then with sudo
+        # Try with sudo first (production), then without sudo (development)
         commands_to_try = [
-            ["fail2ban-client", "status"],
-            ["sudo", "fail2ban-client", "status"]
+            ["sudo", "fail2ban-client", "status"],
+            ["fail2ban-client", "status"]
         ]
         
         for cmd in commands_to_try:
@@ -103,10 +103,10 @@ def get_all_jails():
 def get_banned_ips_for_jail(jail):
     """Get banned IPs for a specific jail"""
     try:
-        # Try without sudo first, then with sudo
+        # Try with sudo first (production), then without sudo (development)
         commands_to_try = [
-            ["fail2ban-client", "get", jail, "banip"],
-            ["sudo", "fail2ban-client", "get", jail, "banip"]
+            ["sudo", "fail2ban-client", "get", jail, "banip"],
+            ["fail2ban-client", "get", jail, "banip"]
         ]
         
         for cmd in commands_to_try:
