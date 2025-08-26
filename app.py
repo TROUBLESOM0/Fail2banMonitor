@@ -41,7 +41,8 @@ def get_banned_ips_from_fail2ban():
                     cmd,
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
+                    env={'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'}
                 )
                 
                 if result.returncode == 0:
@@ -80,7 +81,8 @@ def get_all_jails():
                     cmd,
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
+                    env={'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'}
                 )
                 
                 if result.returncode == 0:
@@ -121,7 +123,8 @@ def get_banned_ips_for_jail(jail):
                     cmd,
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
+                    env={'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'}
                 )
                 
                 if result.returncode == 0:
