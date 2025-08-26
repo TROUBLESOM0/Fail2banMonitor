@@ -29,6 +29,8 @@ def get_banned_ips_from_fail2ban():
     try:
         # Try with sudo first (production), then without sudo (development)
         commands_to_try = [
+            ["sudo", "/usr/bin/fail2ban-client", "get", "sshd", "banip"],
+            ["/usr/bin/fail2ban-client", "get", "sshd", "banip"],
             ["sudo", "fail2ban-client", "get", "sshd", "banip"],
             ["fail2ban-client", "get", "sshd", "banip"]
         ]
@@ -66,6 +68,8 @@ def get_all_jails():
     try:
         # Try with sudo first (production), then without sudo (development)
         commands_to_try = [
+            ["sudo", "/usr/bin/fail2ban-client", "status"],
+            ["/usr/bin/fail2ban-client", "status"],
             ["sudo", "fail2ban-client", "status"],
             ["fail2ban-client", "status"]
         ]
@@ -105,6 +109,8 @@ def get_banned_ips_for_jail(jail):
     try:
         # Try with sudo first (production), then without sudo (development)
         commands_to_try = [
+            ["sudo", "/usr/bin/fail2ban-client", "get", jail, "banip"],
+            ["/usr/bin/fail2ban-client", "get", jail, "banip"],
             ["sudo", "fail2ban-client", "get", jail, "banip"],
             ["fail2ban-client", "get", jail, "banip"]
         ]
