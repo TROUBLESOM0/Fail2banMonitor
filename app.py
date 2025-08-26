@@ -33,6 +33,11 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 # Initialize the app with the extension
 db.init_app(app)
 
+# Import models once at app level to register them
+with app.app_context():
+    from models import BannedIP
+    db.create_all()
+
 # Initialize scheduler and service
 scheduler = BackgroundScheduler()
 
@@ -40,14 +45,11 @@ def update_banned_ips():
     """Background task to update banned IPs from Fail2ban"""
     try:
         with app.app_context():
-            # Import services here, but use registry check for models
+            # Import services here
             from fail2ban_service import Fail2banService
             
-            # Use the already registered model from the app context
-            BannedIP = db.Model.registry._class_registry.get('BannedIP')
-            if BannedIP is None:
-                # Fallback to import if not found
-                from models import BannedIP
+            # Get the already registered model
+            BannedIP = db.Model.registry._class_registry['BannedIP']
             
             fail2ban_service = Fail2banService()
             logger.info("Starting banned IP update task")
@@ -93,13 +95,11 @@ def update_banned_ips():
 def index():
     """Main page displaying banned IPs"""
     try:
-        # Import services and use registry check for models
+        # Import services here
         from fail2ban_service import Fail2banService
         
-        # Use the already registered model from the app context
-        BannedIP = db.Model.registry._class_registry.get('BannedIP')
-        if BannedIP is None:
-            from models import BannedIP
+        # Get the already registered model
+        BannedIP = db.Model.registry._class_registry['BannedIP']
         
         fail2ban_service = Fail2banService()
         
@@ -129,10 +129,8 @@ def index():
 def api_banned_ips():
     """API endpoint to get banned IPs as JSON"""
     try:
-        # Use the already registered model from the app context
-        BannedIP = db.Model.registry._class_registry.get('BannedIP')
-        if BannedIP is None:
-            from models import BannedIP
+        # Get the already registered model
+        BannedIP = db.Model.registry._class_registry['BannedIP']
         
         banned_ips = BannedIP.query.order_by(BannedIP.banned_at.desc()).all()
         
@@ -173,10 +171,8 @@ def api_refresh():
             'error': str(e)
         }), 500
 
-# Initialize database and start scheduler
+# Initialize scheduler jobs and start
 with app.app_context():
-    db.create_all()
-    
     # Run initial update
     update_banned_ips()
     
