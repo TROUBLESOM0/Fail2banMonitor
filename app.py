@@ -211,11 +211,8 @@ def update_banned_ips():
             "last_updated": current_time.isoformat()
         }
         
-        save_banned_ips_to_file(updated_data)
-        logger.info(f"Updated banned IPs: {len(all_ips)} currently banned, {len(cleaned_ips)} total tracked")
-        
-        # If no fail2ban data available and no existing data, create demo data
-        if len(cleaned_ips) == 0 and os.environ.get('DEMO_MODE', 'false').lower() == 'true':
+        # If no fail2ban data available and demo mode is enabled, create demo data
+        if len(all_ips) == 0 and os.environ.get('DEMO_MODE', 'false').lower() == 'true':
             demo_ips = [
                 {
                     "ip_address": "192.168.1.100",
@@ -236,13 +233,16 @@ def update_banned_ips():
                     "abuse_url": "https://abuseipdb.com/check/172.16.0.25"
                 }
             ]
-            
-            updated_data = {
-                "ips": demo_ips,
-                "last_updated": current_time.isoformat()
-            }
-            save_banned_ips_to_file(updated_data)
+            cleaned_ips = demo_ips
             logger.info("Demo mode: Created sample banned IP data")
+        
+        updated_data = {
+            "ips": cleaned_ips,
+            "last_updated": current_time.isoformat()
+        }
+        
+        save_banned_ips_to_file(updated_data)
+        logger.info(f"Updated banned IPs: {len(all_ips)} currently banned, {len(cleaned_ips)} total tracked")
         
     except Exception as e:
         logger.error(f"Error updating banned IPs: {str(e)}")

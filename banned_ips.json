@@ -1,4 +1,23 @@
 {
-  "ips": [],
-  "last_updated": "2025-08-26T20:45:38.625597"
+  "ips": [
+    {
+      "ip_address": "192.168.1.100",
+      "jail": "sshd",
+      "banned_at": "2025-08-26T19:00:34.453862",
+      "abuse_url": "https://abuseipdb.com/check/192.168.1.100"
+    },
+    {
+      "ip_address": "10.0.0.50",
+      "jail": "apache-auth",
+      "banned_at": "2025-08-26T15:00:34.453862",
+      "abuse_url": "https://abuseipdb.com/check/10.0.0.50"
+    },
+    {
+      "ip_address": "172.16.0.25",
+      "jail": "sshd",
+      "banned_at": "2025-08-25T21:00:34.453862",
+      "abuse_url": "https://abuseipdb.com/check/172.16.0.25"
+    }
+  ],
+  "last_updated": "2025-08-26T21:00:34.453862"
 }
