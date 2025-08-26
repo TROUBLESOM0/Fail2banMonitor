@@ -135,7 +135,10 @@ sudo systemctl restart nginx
 
 # Set up fail2ban permissions for the application user
 echo "Configuring fail2ban permissions..."
-echo "fail2ban-monitor ALL=(ALL) NOPASSWD: /usr/bin/fail2ban-client, /usr/local/bin/fail2ban-client" | sudo tee /etc/sudoers.d/fail2ban-monitor
+cat << 'EOF' | sudo tee /etc/sudoers.d/fail2ban-monitor
+Defaults:fail2ban-monitor env_keep += "PATH"
+fail2ban-monitor ALL=(ALL) NOPASSWD: /usr/bin/fail2ban-client, /usr/local/bin/fail2ban-client
+EOF
 sudo chmod 440 /etc/sudoers.d/fail2ban-monitor
 
 echo
