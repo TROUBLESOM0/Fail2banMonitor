@@ -61,10 +61,18 @@ else
     echo "Warning: Nginx configuration test failed. Please check Nginx manually."
 fi
 
-# Remove sudoers configuration
-echo "Removing sudo permissions..."
+# Remove sudoers configuration and fail2ban-monitor user
+echo "Removing sudo permissions and fail2ban-monitor user..."
 if [ -f /etc/sudoers.d/fail2ban-monitor ]; then
     sudo rm /etc/sudoers.d/fail2ban-monitor
+fi
+
+# Remove fail2ban-monitor user
+if id "fail2ban-monitor" &>/dev/null; then
+    sudo userdel fail2ban-monitor
+    echo "Removed fail2ban-monitor user"
+else
+    echo "User fail2ban-monitor does not exist"
 fi
 
 # Remove application directory
@@ -119,6 +127,7 @@ echo "- Fail2ban Monitor application directory: $APP_DIR"
 echo "- Systemd service: fail2ban-monitor"
 echo "- Nginx configuration: fail2ban-monitor"
 echo "- Sudo permissions for fail2ban-client"
+echo "- fail2ban-monitor system user"
 echo
 echo "Preserved:"
 echo "- Database backup (if existed): /tmp/fail2ban_monitor_backup.db"

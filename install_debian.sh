@@ -42,29 +42,33 @@ else
     echo "Fail2ban service is running successfully."
 fi
 
+# Create dedicated fail2ban-monitor user (no home directory)
+echo "Creating fail2ban-monitor user..."
+if ! id "fail2ban-monitor" &>/dev/null; then
+    sudo useradd -r -s /bin/false fail2ban-monitor
+    echo "Created fail2ban-monitor user (system account, no home directory)"
+else
+    echo "User fail2ban-monitor already exists"
+fi
+
 # Create application directory
 APP_DIR="/opt/fail2ban-monitor"
 echo "Creating application directory at $APP_DIR..."
 sudo mkdir -p $APP_DIR
-sudo chown $USER:$USER $APP_DIR
+sudo chown fail2ban-monitor:fail2ban-monitor $APP_DIR
 
-# Create Python virtual environment
+# Create Python virtual environment as fail2ban-monitor user
 echo "Creating Python virtual environment..."
-cd $APP_DIR
-python3 -m venv venv
-source venv/bin/activate
+sudo -u fail2ban-monitor python3 -m venv $APP_DIR/venv
 
 # Install Python dependencies
 echo "Installing Python dependencies..."
-pip install --upgrade pip
-pip install Flask==2.3.3
-pip install Flask-SQLAlchemy==3.0.5
-pip install gunicorn==21.2.0
-pip install APScheduler==3.10.4
-pip install psycopg2-binary==2.9.7
-pip install SQLAlchemy==2.0.21
-pip install Werkzeug==2.3.7
-pip install email-validator==2.0.0
+sudo -u fail2ban-monitor $APP_DIR/venv/bin/pip install --upgrade pip
+sudo -u fail2ban-monitor $APP_DIR/venv/bin/pip install Flask==2.3.3
+sudo -u fail2ban-monitor $APP_DIR/venv/bin/pip install gunicorn==21.2.0
+sudo -u fail2ban-monitor $APP_DIR/venv/bin/pip install APScheduler==3.10.4
+sudo -u fail2ban-monitor $APP_DIR/venv/bin/pip install Werkzeug==2.3.7
+sudo -u fail2ban-monitor $APP_DIR/venv/bin/pip install email-validator==2.0.0
 
 # Copy application files (assuming they're in the current directory)
 echo "Please copy your application files to $APP_DIR"
@@ -73,8 +77,7 @@ echo
 
 # Create environment file
 echo "Creating environment configuration..."
-cat > $APP_DIR/.env << EOF
-DATABASE_URL=sqlite:///fail2ban_monitor.db
+sudo -u fail2ban-monitor tee $APP_DIR/.env > /dev/null << EOF
 SESSION_SECRET=$(openssl rand -hex 32)
 EOF
 
@@ -88,8 +91,8 @@ Wants=fail2ban.service
 
 [Service]
 Type=exec
-User=$USER
-Group=$USER
+User=fail2ban-monitor
+Group=fail2ban-monitor
 WorkingDirectory=$APP_DIR
 Environment=PATH=$APP_DIR/venv/bin
 EnvironmentFile=$APP_DIR/.env
@@ -132,19 +135,19 @@ sudo systemctl restart nginx
 
 # Set up fail2ban permissions for the application user
 echo "Configuring fail2ban permissions..."
-sudo usermod -a -G adm $USER
-echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/fail2ban-client" | sudo tee /etc/sudoers.d/fail2ban-monitor
+echo "fail2ban-monitor ALL=(ALL) NOPASSWD: /usr/bin/fail2ban-client" | sudo tee /etc/sudoers.d/fail2ban-monitor
+sudo chmod 440 /etc/sudoers.d/fail2ban-monitor
 
 echo
 echo "=== Installation Complete ==="
 echo
 echo "Next steps:"
 echo "1. Copy your application files to: $APP_DIR"
+echo "   sudo cp -r /path/to/your/app/* $APP_DIR/"
+echo "   sudo chown -R fail2ban-monitor:fail2ban-monitor $APP_DIR"
 echo "2. Make sure the following files are present:"
 echo "   - app.py"
-echo "   - main.py" 
-echo "   - models.py"
-echo "   - fail2ban_service.py"
+echo "   - main.py"
 echo "   - templates/ directory"
 echo "   - static/ directory"
 echo
@@ -166,4 +169,7 @@ echo "- Environment file: $APP_DIR/.env"
 echo "- Systemd service: /etc/systemd/system/fail2ban-monitor.service"
 echo "- Nginx config: /etc/nginx/sites-available/fail2ban-monitor"
 echo
-echo "Note: You may need to log out and back in for group permissions to take effect."
+echo "Security Features:"
+echo "- Dedicated fail2ban-monitor user (no shell, no home directory)"
+echo "- Limited sudo access only to /usr/bin/fail2ban-client"
+echo "- Application runs with minimal privileges"
