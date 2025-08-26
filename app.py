@@ -27,26 +27,35 @@ BANNED_IPS_FILE = "banned_ips.json"
 def get_banned_ips_from_fail2ban():
     """Get banned IPs from fail2ban using the specified command"""
     try:
-        # Get banned IPs for SSH jail
-        result = subprocess.run(
-            ["sudo", "fail2ban-client", "get", "sshd", "banip"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+        # Try without sudo first, then with sudo
+        commands_to_try = [
+            ["fail2ban-client", "get", "sshd", "banip"],
+            ["sudo", "fail2ban-client", "get", "sshd", "banip"]
+        ]
         
-        if result.returncode == 0:
-            # Parse the output - split by spaces and filter out empty strings
-            ips = [ip.strip() for ip in result.stdout.split() if ip.strip()]
-            return ips
-        else:
-            logger.warning(f"fail2ban-client returned error code {result.returncode}: {result.stderr}")
-            return []
+        for cmd in commands_to_try:
+            try:
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+                
+                if result.returncode == 0:
+                    # Parse the output - split by spaces and filter out empty strings
+                    ips = [ip.strip() for ip in result.stdout.split() if ip.strip()]
+                    return ips
+                else:
+                    logger.debug(f"Command {' '.join(cmd)} returned error code {result.returncode}: {result.stderr}")
+            except FileNotFoundError:
+                logger.debug(f"Command not found: {' '.join(cmd)}")
+                continue
+        
+        logger.warning("fail2ban-client not found or not accessible. Is Fail2ban installed?")
+        return []
     except subprocess.TimeoutExpired:
         logger.error("fail2ban-client command timed out")
-        return []
-    except FileNotFoundError:
-        logger.warning("fail2ban-client not found. Is Fail2ban installed?")
         return []
     except Exception as e:
         logger.error(f"Error getting banned IPs: {str(e)}")
@@ -55,22 +64,38 @@ def get_banned_ips_from_fail2ban():
 def get_all_jails():
     """Get list of all fail2ban jails"""
     try:
-        result = subprocess.run(
-            ["sudo", "fail2ban-client", "status"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+        # Try without sudo first, then with sudo
+        commands_to_try = [
+            ["fail2ban-client", "status"],
+            ["sudo", "fail2ban-client", "status"]
+        ]
         
-        if result.returncode == 0:
-            # Parse jail names from status output
-            lines = result.stdout.split('\n')
-            for line in lines:
-                if 'Jail list:' in line:
-                    jails_part = line.split('Jail list:')[1].strip()
-                    jails = [jail.strip() for jail in jails_part.split(',') if jail.strip()]
-                    return jails
-        return ["sshd"]  # Default to sshd if parsing fails
+        for cmd in commands_to_try:
+            try:
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+                
+                if result.returncode == 0:
+                    # Parse jail names from status output
+                    lines = result.stdout.split('\n')
+                    for line in lines:
+                        if 'Jail list:' in line:
+                            jails_part = line.split('Jail list:')[1].strip()
+                            jails = [jail.strip() for jail in jails_part.split(',') if jail.strip()]
+                            return jails
+                    return ["sshd"]  # Default to sshd if parsing fails
+                else:
+                    logger.debug(f"Command {' '.join(cmd)} returned error code {result.returncode}: {result.stderr}")
+            except FileNotFoundError:
+                logger.debug(f"Command not found: {' '.join(cmd)}")
+                continue
+        
+        logger.warning("fail2ban-client not found or not accessible. Using default jails.")
+        return ["sshd"]  # Default to sshd if fail2ban-client not available
     except Exception as e:
         logger.error(f"Error getting jails: {str(e)}")
         return ["sshd"]
@@ -78,16 +103,30 @@ def get_all_jails():
 def get_banned_ips_for_jail(jail):
     """Get banned IPs for a specific jail"""
     try:
-        result = subprocess.run(
-            ["sudo", "fail2ban-client", "get", jail, "banip"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+        # Try without sudo first, then with sudo
+        commands_to_try = [
+            ["fail2ban-client", "get", jail, "banip"],
+            ["sudo", "fail2ban-client", "get", jail, "banip"]
+        ]
         
-        if result.returncode == 0:
-            ips = [ip.strip() for ip in result.stdout.split() if ip.strip()]
-            return ips
+        for cmd in commands_to_try:
+            try:
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+                
+                if result.returncode == 0:
+                    ips = [ip.strip() for ip in result.stdout.split() if ip.strip()]
+                    return ips
+                else:
+                    logger.debug(f"Command {' '.join(cmd)} returned error code {result.returncode}: {result.stderr}")
+            except FileNotFoundError:
+                logger.debug(f"Command not found: {' '.join(cmd)}")
+                continue
+        
         return []
     except Exception as e:
         logger.error(f"Error getting banned IPs for jail {jail}: {str(e)}")
@@ -175,21 +214,69 @@ def update_banned_ips():
         save_banned_ips_to_file(updated_data)
         logger.info(f"Updated banned IPs: {len(all_ips)} currently banned, {len(cleaned_ips)} total tracked")
         
+        # If no fail2ban data available and no existing data, create demo data
+        if len(cleaned_ips) == 0 and os.environ.get('DEMO_MODE', 'false').lower() == 'true':
+            demo_ips = [
+                {
+                    "ip_address": "192.168.1.100",
+                    "jail": "sshd", 
+                    "banned_at": (current_time - timedelta(hours=2)).isoformat(),
+                    "abuse_url": "https://abuseipdb.com/check/192.168.1.100"
+                },
+                {
+                    "ip_address": "10.0.0.50",
+                    "jail": "apache-auth",
+                    "banned_at": (current_time - timedelta(hours=6)).isoformat(), 
+                    "abuse_url": "https://abuseipdb.com/check/10.0.0.50"
+                },
+                {
+                    "ip_address": "172.16.0.25", 
+                    "jail": "sshd",
+                    "banned_at": (current_time - timedelta(days=1)).isoformat(),
+                    "abuse_url": "https://abuseipdb.com/check/172.16.0.25"
+                }
+            ]
+            
+            updated_data = {
+                "ips": demo_ips,
+                "last_updated": current_time.isoformat()
+            }
+            save_banned_ips_to_file(updated_data)
+            logger.info("Demo mode: Created sample banned IP data")
+        
     except Exception as e:
         logger.error(f"Error updating banned IPs: {str(e)}")
 
 def get_fail2ban_status():
     """Check if fail2ban service is running"""
     try:
-        result = subprocess.run(
+        # Try different ways to check service status
+        commands_to_try = [
+            ["systemctl", "is-active", "fail2ban"],
             ["sudo", "systemctl", "is-active", "fail2ban"],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
+            ["service", "fail2ban", "status"],
+            ["sudo", "service", "fail2ban", "status"]
+        ]
+        
+        for cmd in commands_to_try:
+            try:
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                if result.returncode == 0:
+                    return {
+                        "running": True,
+                        "status": result.stdout.strip()
+                    }
+            except FileNotFoundError:
+                continue
+        
         return {
-            "running": result.returncode == 0,
-            "status": result.stdout.strip()
+            "running": False,
+            "status": "fail2ban service not accessible or not installed"
         }
     except Exception as e:
         return {
