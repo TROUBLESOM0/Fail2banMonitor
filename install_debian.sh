@@ -45,11 +45,16 @@ fi
 # Create dedicated fail2ban-monitor user (no home directory)
 echo "Creating fail2ban-monitor user..."
 if ! id "fail2ban-monitor" &>/dev/null; then
-    sudo useradd -r -s /bin/false fail2ban-monitor
+    sudo useradd -r -s /bin/bash fail2ban-monitor
     echo "Created fail2ban-monitor user (system account, no home directory)"
 else
     echo "User fail2ban-monitor already exists"
 fi
+
+# Add fail2ban-monitor user to necessary groups
+echo "Adding fail2ban-monitor to system groups..."
+sudo usermod -a -G adm fail2ban-monitor 2>/dev/null || true
+sudo usermod -a -G systemd-journal fail2ban-monitor 2>/dev/null || true
 
 # Create application directory
 APP_DIR="/opt/fail2ban-monitor"
@@ -136,8 +141,10 @@ sudo systemctl restart nginx
 # Set up fail2ban permissions for the application user
 echo "Configuring fail2ban permissions..."
 cat << 'EOF' | sudo tee /etc/sudoers.d/fail2ban-monitor
+Defaults:fail2ban-monitor !requiretty
 Defaults:fail2ban-monitor env_keep += "PATH"
-fail2ban-monitor ALL=(ALL) NOPASSWD: /usr/bin/fail2ban-client, /usr/local/bin/fail2ban-client
+fail2ban-monitor ALL=(ALL) NOPASSWD: /usr/bin/fail2ban-client
+fail2ban-monitor ALL=(ALL) NOPASSWD: /usr/local/bin/fail2ban-client
 EOF
 sudo chmod 440 /etc/sudoers.d/fail2ban-monitor
 
