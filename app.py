@@ -231,10 +231,10 @@ def get_fail2ban_status():
     try:
         # Try different ways to check service status
         commands_to_try = [
-            ["systemctl", "is-active", "fail2ban"],
+            ["sudo", "/usr/bin/systemctl", "is-active", "fail2ban"],
+            ["/usr/bin/systemctl", "is-active", "fail2ban"],
             ["sudo", "systemctl", "is-active", "fail2ban"],
-            ["service", "fail2ban", "status"],
-            ["sudo", "service", "fail2ban", "status"]
+            ["systemctl", "is-active", "fail2ban"]
         ]
         
         for cmd in commands_to_try:
@@ -243,7 +243,8 @@ def get_fail2ban_status():
                     cmd,
                     capture_output=True,
                     text=True,
-                    timeout=5
+                    timeout=5,
+                    env={'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'}
                 )
                 if result.returncode == 0:
                     return {
@@ -251,6 +252,7 @@ def get_fail2ban_status():
                         "status": result.stdout.strip()
                     }
             except FileNotFoundError:
+                logger.debug(f"Command not found: {' '.join(cmd)}")
                 continue
         
         return {
