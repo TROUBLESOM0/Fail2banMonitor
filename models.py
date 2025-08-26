@@ -14,6 +14,7 @@ class BannedIP(db.Model):
     __table_args__ = (
         db.Index('idx_ip_jail', 'ip_address', 'jail'),
         db.Index('idx_banned_at', 'banned_at'),
+        {'extend_existing': True}
     )
     
     def __repr__(self):
