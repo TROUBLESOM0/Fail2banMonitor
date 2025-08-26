@@ -211,36 +211,6 @@ def update_banned_ips():
             "last_updated": current_time.isoformat()
         }
         
-        # If no fail2ban data available and demo mode is enabled, create demo data
-        if len(all_ips) == 0 and os.environ.get('DEMO_MODE', 'false').lower() == 'true':
-            demo_ips = [
-                {
-                    "ip_address": "192.168.1.100",
-                    "jail": "sshd", 
-                    "banned_at": (current_time - timedelta(hours=2)).isoformat(),
-                    "abuse_url": "https://abuseipdb.com/check/192.168.1.100"
-                },
-                {
-                    "ip_address": "10.0.0.50",
-                    "jail": "apache-auth",
-                    "banned_at": (current_time - timedelta(hours=6)).isoformat(), 
-                    "abuse_url": "https://abuseipdb.com/check/10.0.0.50"
-                },
-                {
-                    "ip_address": "172.16.0.25", 
-                    "jail": "sshd",
-                    "banned_at": (current_time - timedelta(days=1)).isoformat(),
-                    "abuse_url": "https://abuseipdb.com/check/172.16.0.25"
-                }
-            ]
-            cleaned_ips = demo_ips
-            logger.info("Demo mode: Created sample banned IP data")
-        
-        updated_data = {
-            "ips": cleaned_ips,
-            "last_updated": current_time.isoformat()
-        }
-        
         save_banned_ips_to_file(updated_data)
         logger.info(f"Updated banned IPs: {len(all_ips)} currently banned, {len(cleaned_ips)} total tracked")
         
