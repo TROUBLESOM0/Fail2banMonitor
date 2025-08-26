@@ -33,18 +33,18 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 # Initialize the app with the extension
 db.init_app(app)
 
-# Import models and services after app creation
-from models import BannedIP
-from fail2ban_service import Fail2banService
-
-# Initialize scheduler
+# Initialize scheduler and service
 scheduler = BackgroundScheduler()
-fail2ban_service = Fail2banService()
 
 def update_banned_ips():
     """Background task to update banned IPs from Fail2ban"""
     try:
         with app.app_context():
+            # Import models and services inside the function to avoid circular imports
+            from models import BannedIP
+            from fail2ban_service import Fail2banService
+            
+            fail2ban_service = Fail2banService()
             logger.info("Starting banned IP update task")
             
             # Get current banned IPs from Fail2ban
@@ -88,6 +88,12 @@ def update_banned_ips():
 def index():
     """Main page displaying banned IPs"""
     try:
+        # Import models inside route to avoid circular imports
+        from models import BannedIP
+        from fail2ban_service import Fail2banService
+        
+        fail2ban_service = Fail2banService()
+        
         # Get all current banned IPs from database
         banned_ips = BannedIP.query.order_by(BannedIP.banned_at.desc()).all()
         
@@ -114,6 +120,9 @@ def index():
 def api_banned_ips():
     """API endpoint to get banned IPs as JSON"""
     try:
+        # Import models inside route to avoid circular imports
+        from models import BannedIP
+        
         banned_ips = BannedIP.query.order_by(BannedIP.banned_at.desc()).all()
         
         ips_data = []
