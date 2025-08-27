@@ -74,7 +74,17 @@ $(document).ready(function() {
     // Show current time
     function updateCurrentTime() {
         const now = new Date();
-        const timeString = now.toISOString().slice(0, 19).replace('T', ' ') + ' UTC';
+        // Convert to Central Time
+        const timeString = now.toLocaleString('en-US', {
+            timeZone: 'America/Chicago',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        }) + ' CST';
         
         // Add current time to footer if it doesn't exist
         if (!$('#currentTime').length) {

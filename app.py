@@ -8,6 +8,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import atexit
+import pytz
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -172,7 +173,9 @@ def update_banned_ips():
         logger.info(f"Found jails: {jails}")
         
         all_ips = []
-        current_time = datetime.now()
+        # Get current time for tracking updates (Central Time)
+        central_tz = pytz.timezone('America/Chicago')
+        current_time = datetime.now(central_tz)
         
         # Get banned IPs from each jail
         for jail in jails:
@@ -277,6 +280,27 @@ def index():
         # Get service status
         service_status = get_fail2ban_status()
         
+        # Format last_updated for display in Central Time
+        formatted_last_updated = None
+        if last_updated:
+            try:
+                # Parse the ISO format timestamp and convert to Central Time
+                if isinstance(last_updated, str):
+                    dt = datetime.fromisoformat(last_updated.replace('Z', '+00:00'))
+                else:
+                    dt = last_updated
+                
+                # Convert to Central Time
+                central_tz = pytz.timezone('America/Chicago')
+                if dt.tzinfo is None:
+                    # Assume UTC if no timezone info
+                    dt = pytz.utc.localize(dt)
+                dt_central = dt.astimezone(central_tz)
+                formatted_last_updated = dt_central.strftime('%m/%d/%Y %I:%M:%S %p CST')
+            except Exception as e:
+                logger.error(f"Error formatting last_updated time: {e}")
+                formatted_last_updated = last_updated
+        
         # Calculate statistics
         total_banned = len(banned_ips)
         unique_jails = len(set(ip["jail"] for ip in banned_ips)) if banned_ips else 0
@@ -300,7 +324,7 @@ def index():
                              total_banned=total_banned,
                              unique_jails=unique_jails,
                              jail_stats=jail_stats,
-                             last_updated=last_updated)
+                             last_updated=formatted_last_updated)
     except Exception as e:
         logger.error(f"Error loading index page: {str(e)}")
         return render_template('index.html',
