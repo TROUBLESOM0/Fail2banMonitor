@@ -106,9 +106,9 @@ $(document).ready(function() {
         }
     }
 
-    // Update time immediately and then every minute
+    // Update time immediately and then every second
     updateCurrentTime();
-    setInterval(updateCurrentTime, 60000);
+    setInterval(updateCurrentTime, 1000);
 
     // Click handler for IP addresses to copy to clipboard
     $(document).on('click', '.ip-address', function() {
