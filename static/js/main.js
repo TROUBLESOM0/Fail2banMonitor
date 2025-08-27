@@ -1,6 +1,6 @@
 /**
  * Fail2ban Banned IPs Monitor - Frontend JavaScript
- * Version: v1.0.0
+ * Version: v1.0.1
  * Description: DataTables initialization and AJAX functionality for IP monitoring dashboard
  * Date: August 2025
  */

@@ -1,6 +1,6 @@
 [project]
 name = "fail2ban-monitor"
-version = "1.0.0"
+version = "1.0.1"
 description = "Flask web application for monitoring and displaying banned IPs from Fail2ban with real-time updates and AbuseIPDB integration"
 requires-python = ">=3.11"
 dependencies = [

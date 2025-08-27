@@ -5,7 +5,7 @@
 This is a Flask-based web application that monitors and displays IP addresses banned by Fail2ban in real-time. The application provides a dashboard for system administrators to track security incidents and manage banned IPs across different jails. It features a responsive web interface with automated background updates and integration with abuse reporting services.
 
 ![Fail2ban Monitor Dashboard](static/img/dashboard-screenshot.png)
-*Current dashboard showing the v1.0.0 interface with custom favicon, version control, and Central Time display*
+*v1.0.0 dashboard*
 
 ## User Preferences
 
