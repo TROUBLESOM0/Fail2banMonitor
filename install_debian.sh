@@ -4,6 +4,7 @@
 # This script installs and configures the Fail2ban Monitor application
 
 set -e  # Exit on any error
+_pwd=`dirname "$(realpath $0)"`
 
 echo "=== Fail2ban Monitor Installation Script for Debian ==="
 echo "This script will install and configure the Fail2ban Monitor application"
@@ -13,6 +14,37 @@ echo
 if [[ $EUID -eq 0 ]]; then
    echo "Please do not run this script as root. Run as a regular user with sudo privileges."
    exit 1
+fi
+
+# Verify Debian version
+if [[ -f /etc/os-release ]]
+then :
+else
+echo "++Unable to get OS Version from os-release++"
+echo -e "++Will continue but may have compatibility issues++\n"
+fi
+
+os_version=$(cat /etc/os-release | grep VERSION_CODENAME | cut -d '=' -f2)
+if [[ $os_version = "buster" ]]
+then echo -e "OS Version: Buster (compatible)\n"
+elif [[ $os_version = "bullseye" ]]
+then echo -e "OS Version: Bullseye (compatible)\n"
+elif [[ $os_version = "bookworm" ]]
+then echo -e "OS Version: Bookworm (compatible)\n"
+elif [[ $os_version = "" ]]
+then echo "OS Version (not-found): $os_version (non-compatible)"
+echo -e "Will continue installation, but may be issues\n"
+#exit 1
+else echo -e "OS Version: $os_version may not be compatible, but will continue installation\n"
+#exit 1
+fi
+
+# Confirm installation
+read -p "Do You Want To Proceed With Installation (y/N): " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+    echo "Installation cancelled."
+    exit 0
 fi
 
 # Update system packages
@@ -114,7 +146,9 @@ echo "Configuring Nginx reverse proxy..."
 sudo tee /etc/nginx/sites-available/fail2ban-monitor > /dev/null << EOF
 server {
     listen 80;
-    server_name localhost;  # Change to your domain name
+    listen 443 ssl http2;
+    server_name localhost;
+#    include /etc/nginx/certs/ssl.conf;
 
     location / {
         proxy_pass http://127.0.0.1:5000;
@@ -126,8 +160,8 @@ server {
 
     location /static {
         alias $APP_DIR/static;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
+    #    expires 1y;  #cache header for 1yr
+    #    add_header Cache-Control "public, immutable";  #allow CDN's cache until expires
     }
 }
 EOF
@@ -151,27 +185,27 @@ sudo chmod 440 /etc/sudoers.d/fail2ban-monitor
 echo
 echo "=== Installation Complete ==="
 echo
-echo "Next steps:"
-echo "1. Copy your application files to: $APP_DIR"
-echo "   sudo cp -r /path/to/your/app/* $APP_DIR/"
-echo "   sudo chown -R fail2ban-monitor:fail2ban-monitor $APP_DIR"
-echo "2. Make sure the following files are present:"
+echo "Copying application files to: $APP_DIR"
+sudo cp -r $_pwd/* $APP_DIR/
+sudo chown -R fail2ban-monitor:fail2ban-monitor $APP_DIR
+echo 
+echo "Make sure the following files are present:"
 echo "   - app.py"
 echo "   - main.py"
 echo "   - templates/ directory"
 echo "   - static/ directory"
 echo
-echo "3. Start the service:"
-echo "   sudo systemctl enable fail2ban-monitor"
-echo "   sudo systemctl start fail2ban-monitor"
+echo "Starting the service:"
+sudo systemctl enable fail2ban-monitor
+sudo systemctl start fail2ban-monitor
 echo
-echo "4. Check service status:"
+echo " Check service status with:"
 echo "   sudo systemctl status fail2ban-monitor"
 echo
-echo "5. View application logs:"
+echo " View application logs with:"
 echo "   sudo journalctl -u fail2ban-monitor -f"
 echo
-echo "6. Access the application at: http://your-server-ip"
+echo " Access the application at: http://your-server-ip"
 echo
 echo "Configuration files created:"
 echo "- Application directory: $APP_DIR"
