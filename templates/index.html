@@ -173,6 +173,12 @@
                             <small class="text-muted">Never</small>
                         {% endif %}
                         <div class="mt-2">
+                            <small class="text-muted d-block">
+                                <i class="fas fa-hourglass-half me-1"></i>
+                                Next update: <span id="countdown-display">Loading...</span>
+                            </small>
+                        </div>
+                        <div class="mt-2">
                             <button id="refreshBtn" class="btn btn-sm btn-outline-primary">
                                 <i class="fas fa-sync-alt me-1"></i>
                                 Refresh Now
@@ -185,23 +191,11 @@
 
         <!-- Footer -->
         <footer class="mt-5 pt-4 border-top">
-            <div class="row">
-                <div class="col-md-6">
-                    <p class="text-muted">
-                        <i class="fas fa-sync me-2"></i>
-                        {% if last_updated %}
-                            Last updated: {{ last_updated }}
-                        {% else %}
-                            Last update: Never
-                        {% endif %}
-                    </p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <p class="text-muted">
-                        <i class="fas fa-code me-2"></i>
-                        Powered by Mohafabode <span class="badge bg-secondary ms-2">v1.0.1</span>
-                    </p>
-                </div>
+            <div class="text-center">
+                <p class="text-muted">
+                    <i class="fas fa-code me-2"></i>
+                    Powered by Mohafabode <span class="badge bg-secondary ms-2">v1.0.1</span>
+                </p>
             </div>
         </footer>
     </div>

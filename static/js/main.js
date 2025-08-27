@@ -148,7 +148,38 @@ $(document).ready(function() {
             document.body.removeChild(textArea);
         }
     }
+
+    // Start countdown timer for next update (updates every hour)
+    startCountdownTimer();
 });
+
+// Start countdown timer for next update
+function startCountdownTimer() {
+    function updateCountdown() {
+        // Updates happen every hour at the top of the hour
+        const now = new Date();
+        const nextHour = new Date(now);
+        nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0); // Next hour at :00
+        
+        const timeUntilUpdate = nextHour - now;
+        
+        if (timeUntilUpdate > 0) {
+            const minutes = Math.floor(timeUntilUpdate / (1000 * 60));
+            const seconds = Math.floor((timeUntilUpdate % (1000 * 60)) / 1000);
+            
+            const formattedTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            $('#countdown-display').text(formattedTime);
+        } else {
+            $('#countdown-display').text('Updating...');
+        }
+    }
+    
+    // Update immediately
+    updateCountdown();
+    
+    // Update every second
+    setInterval(updateCountdown, 1000);
+}
 
 // Utility function to show alerts
 function showAlert(type, message, autoHide = 5000) {
