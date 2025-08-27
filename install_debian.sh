@@ -1,4 +1,10 @@
 #!/bin/bash
+#
+# Fail2ban Banned IPs Monitor - Debian Installation Script
+# Version: v1.0.0
+# Description: Automated installation script for Debian/Ubuntu systems
+# Date: August 2025
+#
 
 # Fail2ban Monitor Installation Script for Debian Linux
 # This script installs and configures the Fail2ban Monitor application

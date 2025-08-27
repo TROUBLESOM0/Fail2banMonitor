@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+"""
+Fail2ban Banned IPs Monitor - Main Application
+Version: v1.0.0
+Description: Flask web application for monitoring and displaying banned IPs from Fail2ban
+Author: Fail2ban Monitor System
+Date: August 2025
+"""
+
 import os
 import json
 import logging
@@ -9,6 +18,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import atexit
 import pytz
+
+# Application version
+APP_VERSION = "v1.0.0"
+APP_NAME = "Fail2ban Banned IPs Monitor"
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -357,6 +370,15 @@ def api_banned_ips():
             'data': [],
             'total': 0
         }), 500
+
+@app.route('/api/version')
+def api_version():
+    """API endpoint to get application version information"""
+    return jsonify({
+        'name': APP_NAME,
+        'version': APP_VERSION,
+        'status': 'running'
+    })
 
 @app.route('/api/refresh')
 def api_refresh():
