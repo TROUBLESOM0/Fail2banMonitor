@@ -78,39 +78,6 @@ $(document).ready(function() {
         window.location.reload();
     }, 5 * 60 * 1000); // 5 minutes
 
-    // Show current time
-    function updateCurrentTime() {
-        const now = new Date();
-        // Convert to Central Time
-        const timeString = now.toLocaleString('en-US', {
-            timeZone: 'America/Chicago',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: true
-        }) + ' CST';
-
-        // Add current time to footer if it doesn't exist
-        if (!$('#currentTime').length) {
-            $('footer .row').append(
-                '<div class="col-12 text-center mt-2">' +
-                '<small class="text-muted" id="currentTime">' +
-                '<i class="fas fa-clock me-1"></i>Current time: ' + timeString +
-                '</small></div>'
-            );
-        } else {
-            $('#currentTime').html('<i class="fas fa-clock me-1"></i>Current ti>
-        }
-    }
-
-    // Update time immediately and then every second
-    updateCurrentTime();
-    setInterval(updateCurrentTime, 1000);
-
-
     // Click handler for IP addresses to copy to clipboard
     $(document).on('click', '.ip-address', function() {
         const ip = $(this).text();
