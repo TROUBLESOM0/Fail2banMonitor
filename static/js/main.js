@@ -78,6 +78,7 @@ $(document).ready(function() {
         window.location.reload();
     }, 5 * 60 * 1000); // 5 minutes
 
+
     // Click handler for IP addresses to copy to clipboard
     $(document).on('click', '.ip-address', function() {
         const ip = $(this).text();
