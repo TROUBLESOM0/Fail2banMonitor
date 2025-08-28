@@ -82,22 +82,23 @@ $(document).ready(function() {
     // Click handler for IP addresses to copy to clipboard
     $(document).on('click', '.ip-address', function() {
         const ip = $(this).text();
+        const $element = $(this);
         
         // Try to copy to clipboard
         if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(ip).then(function() {
-                showAlert('info', `IP address ${ip} copied to clipboard!`, 2000);
+                showCopyBubble($element, ip);
             }).catch(function() {
                 // Fallback for older browsers
-                copyToClipboardFallback(ip);
+                copyToClipboardFallback(ip, $element);
             });
         } else {
-            copyToClipboardFallback(ip);
+            copyToClipboardFallback(ip, $element);
         }
     });
 
     // Fallback clipboard copy method
-    function copyToClipboardFallback(text) {
+    function copyToClipboardFallback(text, $element) {
         const textArea = document.createElement('textarea');
         textArea.value = text;
         textArea.style.position = 'fixed';
@@ -109,7 +110,7 @@ $(document).ready(function() {
         
         try {
             document.execCommand('copy');
-            showAlert('info', `IP address ${text} copied to clipboard!`, 2000);
+            showCopyBubble($element, text);
         } catch (err) {
             console.error('Failed to copy text: ', err);
             showAlert('warning', 'Failed to copy IP address to clipboard', 3000);
@@ -203,4 +204,39 @@ function getIconForAlertType(type) {
         'info': 'info-circle'
     };
     return icons[type] || 'info-circle';
+}
+
+// Show copy bubble notification near the clicked element
+function showCopyBubble($element, ip) {
+    // Create bubble element
+    const bubbleId = 'copy-bubble-' + Date.now();
+    const bubble = $(`
+        <div id="${bubbleId}" class="copy-bubble">
+            <i class="fas fa-check-circle me-1"></i>
+            Copied ${ip}!
+        </div>
+    `);
+    
+    // Get position of clicked element
+    const offset = $element.offset();
+    const elementHeight = $element.outerHeight();
+    
+    // Position bubble above the clicked element
+    bubble.css({
+        position: 'absolute',
+        top: offset.top - 40,
+        left: offset.left,
+        zIndex: 9999
+    });
+    
+    // Add to body and show with animation
+    $('body').append(bubble);
+    bubble.fadeIn(200);
+    
+    // Remove after 2 seconds
+    setTimeout(function() {
+        bubble.fadeOut(300, function() {
+            bubble.remove();
+        });
+    }, 2000);
 }

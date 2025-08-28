@@ -168,3 +168,27 @@ footer {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--bs-secondary);
 }
+
+/* Copy bubble notification */
+.copy-bubble {
+    display: none;
+    background-color: var(--bs-success);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+.copy-bubble::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 20px;
+    border: 6px solid transparent;
+    border-top-color: var(--bs-success);
+}
