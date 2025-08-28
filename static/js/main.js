@@ -151,7 +151,28 @@ $(document).ready(function() {
 
     // Start countdown timer for next update (updates every hour)
     startCountdownTimer();
+
+    // Start current time display
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
 });
+
+// Function to update current time display
+function updateCurrentTime() {
+    const now = new Date();
+    const options = {
+        timeZone: 'America/Chicago',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    };
+    const timeString = now.toLocaleString('en-US', options).replace(',', '');
+    $('#time-display').text(timeString + ' CST');
+}
 
 // Start countdown timer for next update
 function startCountdownTimer() {
