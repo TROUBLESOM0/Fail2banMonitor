@@ -73,7 +73,8 @@
                                                 <code class="ip-address">{{ ip.ip_address if ip.ip_address else ip['ip_address'] }}</code>
                                             </td>
                                             <td>
-                                                <span class="badge bg-secondary">{{ ip.jail if ip.jail else ip['jail'] }}</span>
+                                                {% set jail_name = ip.jail if ip.jail else ip['jail'] %}
+                                                <span class="badge {{ get_jail_color(jail_name) }}">{{ jail_name }}</span>
                                             </td>
                                             <td>
                                                 <small class="text-muted">

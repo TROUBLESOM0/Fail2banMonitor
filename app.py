@@ -38,6 +38,35 @@ scheduler = BackgroundScheduler()
 # File to store banned IPs
 BANNED_IPS_FILE = "banned_ips.json"
 
+def get_jail_color(jail_name):
+    """Return Bootstrap badge color class based on jail name"""
+    jail_colors = {
+        'sshd': 'bg-danger',        # Red for SSH attacks
+        'apache': 'bg-warning',     # Yellow for Apache attacks  
+        'nginx': 'bg-info',         # Blue for Nginx attacks
+        'postfix': 'bg-success',    # Green for mail attacks
+        'dovecot': 'bg-primary',    # Primary blue for IMAP/POP3
+        'vsftpd': 'bg-secondary',   # Gray for FTP attacks
+        'proftpd': 'bg-secondary',  # Gray for FTP attacks
+        'pure-ftpd': 'bg-secondary', # Gray for FTP attacks
+        'asterisk': 'bg-dark',      # Dark for VoIP attacks
+        'roundcube': 'bg-warning',  # Yellow for webmail
+        'wordpress': 'bg-info',     # Blue for WordPress
+        'drupal': 'bg-info',        # Blue for Drupal
+        'joomla': 'bg-info',        # Blue for Joomla
+        'phpmyadmin': 'bg-danger',  # Red for database admin
+        'mysqld': 'bg-danger',      # Red for database
+        'postgresql': 'bg-danger',  # Red for database
+        'suhosin': 'bg-warning',    # Yellow for PHP security
+        'recidive': 'bg-dark',      # Dark for repeat offenders
+    }
+    
+    # Default to secondary (gray) for unknown jails
+    return jail_colors.get(jail_name.lower(), 'bg-secondary')
+
+# Register the function as a template function
+app.jinja_env.globals.update(get_jail_color=get_jail_color)
+
 def get_banned_ips_from_fail2ban():
     """Get banned IPs from fail2ban using the specified command"""
     try:
