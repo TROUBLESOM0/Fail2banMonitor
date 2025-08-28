@@ -105,7 +105,7 @@
                                 <h4>No Banned IPs</h4>
                                 <p class="text-muted">
                                     {% if service_status.running %}
-                                        No IP addresses are currently banned by Fail2ban. Something fishy is going on...
+                                        Great! No IP addresses are currently banned by Fail2ban.
                                     {% else %}
                                         Unable to retrieve banned IPs. Please check Fail2ban service status.
                                     {% endif %}
@@ -192,6 +192,12 @@
         <!-- Footer -->
         <footer class="mt-5 pt-4 border-top">
             <div class="row">
+                <div class="col-md-6">
+                    <p class="text-muted small mb-0" id="current-time">
+                        <i class="fas fa-clock me-1"></i>
+                        Current Time: <span id="time-display">Loading...</span>
+                    </p>
+                </div>
                 <div class="col-md-6 text-md-end">
                     <p class="text-muted">
                         <i class="fas fa-code me-2"></i>
