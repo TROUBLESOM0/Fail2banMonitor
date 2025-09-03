@@ -441,7 +441,7 @@ def get_fail2ban_status():
     try:
         # Try different ways to check service status
         commands_to_try = [
-            ["sudo", "/usr/bin/systemctl", "is-active", "fail2ban"],
+#            ["sudo", "/usr/bin/systemctl", "is-active", "fail2ban"],
             ["/usr/bin/systemctl", "is-active", "fail2ban"],
             ["sudo", "systemctl", "is-active", "fail2ban"],
             ["systemctl", "is-active", "fail2ban"]
