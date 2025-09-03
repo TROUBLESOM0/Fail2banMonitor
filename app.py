@@ -315,31 +315,25 @@ def get_banned_ips_with_times():
                                 try:
                                     # Try to parse as epoch timestamp first
                                     if ban_date.replace('.', '').isdigit():
-                                        ban_time_dt = datetime.fromtimestamp(float(ban_date), tz=pytz.UTC)
-                                        central_tz = pytz.timezone('America/Chicago')
-                                        ban_time_central = ban_time_dt.astimezone(central_tz)
-                                        formatted_time = ban_time_central.strftime('%m/%d/%Y %I:%M:%S %p CST')
+                                        ban_time_dt = datetime.fromtimestamp(float(ban_date))
+                                        formatted_time = ban_time_dt.strftime('%m/%d/%Y %I:%M:%S %p CST')
                                     else:
-                                        # Try to parse as date/time string format
+                                        # Try to parse as date/time string format and reformat
                                         try:
                                             # Common formats: YYYY-MM-DD HH:MM:SS or MM/DD/YYYY HH:MM:SS
                                             for fmt in ['%Y-%m-%d %H:%M:%S', '%m/%d/%Y %H:%M:%S', '%Y-%m-%d %H:%M', '%m/%d/%Y %H:%M']:
                                                 try:
                                                     parsed_dt = datetime.strptime(full_datetime_str, fmt)
-                                                    # Assume UTC and convert to Central
-                                                    parsed_dt = parsed_dt.replace(tzinfo=pytz.UTC)
-                                                    central_tz = pytz.timezone('America/Chicago')
-                                                    ban_time_central = parsed_dt.astimezone(central_tz)
-                                                    formatted_time = ban_time_central.strftime('%m/%d/%Y %I:%M:%S %p CST')
+                                                    formatted_time = parsed_dt.strftime('%m/%d/%Y %I:%M:%S %p CST')
                                                     break
                                                 except ValueError:
                                                     continue
                                         except:
-                                            # If all parsing fails, use the original combined string
-                                            formatted_time = full_datetime_str
+                                            # If all parsing fails, just add CST to the original combined string
+                                            formatted_time = f"{full_datetime_str} CST"
                                 except (ValueError, OverflowError, OSError):
-                                    # Keep original format if conversion fails
-                                    formatted_time = full_datetime_str
+                                    # Keep original format with CST label
+                                    formatted_time = f"{full_datetime_str} CST"
                                 
                                 ban_data.append({
                                     'ip': ip,
