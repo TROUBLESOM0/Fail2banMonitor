@@ -219,14 +219,21 @@ def update_banned_ips():
         central_tz = pytz.timezone('America/Chicago')
         current_time = datetime.now(central_tz)
         
+        # Get actual ban times for all currently banned IPs
+        actual_ban_times = get_banned_ips_with_actual_ban_times()
+        
         # Get banned IPs from each jail
         for jail in jails:
             jail_ips = get_banned_ips_for_jail(jail)
             for ip in jail_ips:
+                # Try to get the actual ban time, fallback to current time if not available
+                ip_jail_key = f"{ip}_{jail}"
+                actual_ban_time = actual_ban_times.get(ip_jail_key, current_time.isoformat())
+                
                 ip_record = {
                     "ip_address": ip,
                     "jail": jail,
-                    "banned_at": current_time.isoformat(),
+                    "banned_at": actual_ban_time,
                     "abuse_url": f"https://abuseipdb.com/check/{ip}"
                 }
                 all_ips.append(ip_record)
@@ -270,6 +277,84 @@ def update_banned_ips():
         
     except Exception as e:
         logger.error(f"Error updating banned IPs: {str(e)}")
+
+def get_banned_ips_with_actual_ban_times():
+    """Get banned IPs with their actual ban start times from fail2ban"""
+    try:
+        # Get all available jails first
+        all_jails = get_all_jails()
+        if not all_jails:
+            all_jails = ['sshd']  # Default fallback
+        
+        ban_data = {}  # Dictionary to store IP -> ban_time mapping
+        
+        # Check each jail for banned IPs with their actual ban times
+        for jail in all_jails:
+            try:
+                # Use the command to get IP, date, and time of ban
+                cmd = f"sudo fail2ban-client get {jail} banip --with-time | awk '{{print $1, $7, $8}}'"
+                
+                result = subprocess.run(
+                    cmd,
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    env={'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'}
+                )
+                
+                if result.returncode == 0 and result.stdout.strip():
+                    lines = result.stdout.strip().split('\n')
+                    
+                    for line in lines:
+                        if line.strip():
+                            # The command gives us: IP date time (3 fields separated by spaces)
+                            parts = line.strip().split()
+                            if len(parts) >= 3:
+                                ip = parts[0]
+                                ban_date = parts[1]
+                                ban_time = parts[2]
+                                
+                                # Combine date and time for complete timestamp
+                                full_datetime_str = f"{ban_date} {ban_time}"
+                                formatted_time = datetime.now().isoformat()  # Default fallback
+                                
+                                try:
+                                    # Try to parse as epoch timestamp first
+                                    if ban_date.replace('.', '').isdigit():
+                                        ban_time_dt = datetime.fromtimestamp(float(ban_date))
+                                        formatted_time = ban_time_dt.isoformat()
+                                    else:
+                                        # Try to parse as date/time string format
+                                        try:
+                                            # Common formats: YYYY-MM-DD HH:MM:SS or MM/DD/YYYY HH:MM:SS
+                                            for fmt in ['%Y-%m-%d %H:%M:%S', '%m/%d/%Y %H:%M:%S', '%Y-%m-%d %H:%M', '%m/%d/%Y %H:%M']:
+                                                try:
+                                                    parsed_dt = datetime.strptime(full_datetime_str, fmt)
+                                                    formatted_time = parsed_dt.isoformat()
+                                                    break
+                                                except ValueError:
+                                                    continue
+                                        except:
+                                            # If all parsing fails, use current time as fallback
+                                            formatted_time = datetime.now().isoformat()
+                                except (ValueError, OverflowError, OSError):
+                                    # Use current time as fallback
+                                    formatted_time = datetime.now().isoformat()
+                                
+                                # Store the ban time for this IP-jail combination
+                                key = f"{ip}_{jail}"
+                                ban_data[key] = formatted_time
+                                
+            except Exception as e:
+                logger.debug(f"Error getting actual ban times for jail {jail}: {str(e)}")
+                continue
+        
+        return ban_data
+            
+    except Exception as e:
+        logger.error(f"Error getting banned IPs with actual ban times: {str(e)}")
+        return {}
 
 def get_banned_ips_with_times():
     """Get banned IPs with their ban expiration times"""
