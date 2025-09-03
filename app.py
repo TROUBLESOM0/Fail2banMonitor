@@ -291,8 +291,8 @@ def get_banned_ips_with_actual_ban_times():
         # Check each jail for banned IPs with their actual ban times
         for jail in all_jails:
             try:
-                # Use the command to get IP, date, and time of ban
-                cmd = f"sudo fail2ban-client get {jail} banip --with-time | awk '{{print $1, $7, $8}}'"
+                # Use the command to get IP, date, and time of ban start
+                cmd = f"sudo fail2ban-client get {jail} banip --with-time | awk '{{print $1, $2, $3}}'"
                 
                 result = subprocess.run(
                     cmd,
