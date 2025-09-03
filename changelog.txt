@@ -22,6 +22,7 @@ Version 1.0.1 (Current)
 - Improved error handling for timestamp parsing and formatting
 - Enhanced jail detection across multiple fail2ban configurations
 - Implemented actual ban time retrieval using fail2ban-client --with-time commands
+- Corrected ban start time parsing to use fields 2 and 3 instead of fields 7 and 8
 
 Version 1.0.0 (Initial Release)
 -------------------------------
