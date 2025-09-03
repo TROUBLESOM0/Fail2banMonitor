@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Fail2ban Banned IPs Monitor - Main Application
-Version: v1.0.1
+Version: v2.0.0
 Description: Flask web application for monitoring and displaying banned IPs from Fail2ban
 Author: Fail2ban Monitor System
 Date: August 2025
@@ -20,7 +20,7 @@ import atexit
 import pytz
 
 # Application version
-APP_VERSION = "v1.0.1"
+APP_VERSION = "v2.0.0"
 APP_NAME = "Fail2ban Banned IPs Monitor"
 
 # Configure logging
