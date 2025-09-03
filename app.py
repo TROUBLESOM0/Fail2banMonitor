@@ -301,24 +301,45 @@ def get_banned_ips_with_times():
                     
                     for line in lines:
                         if line.strip():
-                            # The awk command gives us: IP timestamp duration/info
+                            # The awk command gives us: IP date time (3 fields separated by spaces)
                             parts = line.strip().split()
-                            if len(parts) >= 2:
+                            if len(parts) >= 3:
                                 ip = parts[0]
-                                ban_end_timestamp = parts[1] if len(parts) > 1 else parts[0]
+                                ban_date = parts[1]
+                                ban_time = parts[2]
                                 
-                                # Convert timestamp to readable format
-                                formatted_time = ban_end_timestamp
+                                # Combine date and time for complete timestamp
+                                full_datetime_str = f"{ban_date} {ban_time}"
+                                formatted_time = full_datetime_str
+                                
                                 try:
-                                    # Try to parse as epoch timestamp
-                                    if ban_end_timestamp.replace('.', '').isdigit():
-                                        ban_time_dt = datetime.fromtimestamp(float(ban_end_timestamp), tz=pytz.UTC)
+                                    # Try to parse as epoch timestamp first
+                                    if ban_date.replace('.', '').isdigit():
+                                        ban_time_dt = datetime.fromtimestamp(float(ban_date), tz=pytz.UTC)
                                         central_tz = pytz.timezone('America/Chicago')
                                         ban_time_central = ban_time_dt.astimezone(central_tz)
                                         formatted_time = ban_time_central.strftime('%m/%d/%Y %I:%M:%S %p CST')
+                                    else:
+                                        # Try to parse as date/time string format
+                                        try:
+                                            # Common formats: YYYY-MM-DD HH:MM:SS or MM/DD/YYYY HH:MM:SS
+                                            for fmt in ['%Y-%m-%d %H:%M:%S', '%m/%d/%Y %H:%M:%S', '%Y-%m-%d %H:%M', '%m/%d/%Y %H:%M']:
+                                                try:
+                                                    parsed_dt = datetime.strptime(full_datetime_str, fmt)
+                                                    # Assume UTC and convert to Central
+                                                    parsed_dt = parsed_dt.replace(tzinfo=pytz.UTC)
+                                                    central_tz = pytz.timezone('America/Chicago')
+                                                    ban_time_central = parsed_dt.astimezone(central_tz)
+                                                    formatted_time = ban_time_central.strftime('%m/%d/%Y %I:%M:%S %p CST')
+                                                    break
+                                                except ValueError:
+                                                    continue
+                                        except:
+                                            # If all parsing fails, use the original combined string
+                                            formatted_time = full_datetime_str
                                 except (ValueError, OverflowError, OSError):
                                     # Keep original format if conversion fails
-                                    pass
+                                    formatted_time = full_datetime_str
                                 
                                 ban_data.append({
                                     'ip': ip,
