@@ -274,59 +274,64 @@ def update_banned_ips():
 def get_banned_ips_with_times():
     """Get banned IPs with their ban expiration times"""
     try:
-        # Use the specific command provided by the user
-        cmd = ["sudo", "fail2ban-client", "get", "sshd", "banip", "--with-time"]
+        # Get all available jails first
+        all_jails = get_all_jails()
+        if not all_jails:
+            all_jails = ['sshd']  # Default fallback
         
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=10,
-            env={'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'}
-        )
+        ban_data = []
         
-        if result.returncode == 0:
-            # Parse the output using awk equivalent
-            lines = result.stdout.strip().split('\n')
-            ban_data = []
+        # Check each jail for banned IPs with times
+        for jail in all_jails:
+            try:
+                # Use the specific command format provided by the user
+                cmd = f"sudo fail2ban-client get {jail} banip --with-time | awk '{{print $1, $2, $3}}'"
+                
+                result = subprocess.run(
+                    cmd,
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    env={'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'}
+                )
+                
+                if result.returncode == 0 and result.stdout.strip():
+                    lines = result.stdout.strip().split('\n')
+                    
+                    for line in lines:
+                        if line.strip():
+                            # The awk command gives us: IP timestamp duration/info
+                            parts = line.strip().split()
+                            if len(parts) >= 2:
+                                ip = parts[0]
+                                ban_end_timestamp = parts[1] if len(parts) > 1 else parts[0]
+                                
+                                # Convert timestamp to readable format
+                                formatted_time = ban_end_timestamp
+                                try:
+                                    # Try to parse as epoch timestamp
+                                    if ban_end_timestamp.replace('.', '').isdigit():
+                                        ban_time_dt = datetime.fromtimestamp(float(ban_end_timestamp), tz=pytz.UTC)
+                                        central_tz = pytz.timezone('America/Chicago')
+                                        ban_time_central = ban_time_dt.astimezone(central_tz)
+                                        formatted_time = ban_time_central.strftime('%m/%d/%Y %I:%M:%S %p CST')
+                                except (ValueError, OverflowError, OSError):
+                                    # Keep original format if conversion fails
+                                    pass
+                                
+                                ban_data.append({
+                                    'ip': ip,
+                                    'ban_end_time': formatted_time,
+                                    'jail': jail  # Use the current jail we're checking
+                                })
+                                
+            except Exception as e:
+                logger.debug(f"Error getting ban times for jail {jail}: {str(e)}")
+                continue
+        
+        return ban_data
             
-            for line in lines:
-                if line.strip():
-                    # Split by whitespace and take first 3 fields: IP, timestamp, jail
-                    parts = line.strip().split()
-                    if len(parts) >= 3:
-                        ip = parts[0]
-                        ban_time = parts[1]
-                        jail = parts[2]
-                        
-                        # Convert timestamp to readable format
-                        try:
-                            # Assume timestamp is in epoch format
-                            ban_time_dt = datetime.fromtimestamp(float(ban_time), tz=pytz.UTC)
-                            central_tz = pytz.timezone('America/Chicago')
-                            ban_time_central = ban_time_dt.astimezone(central_tz)
-                            formatted_time = ban_time_central.strftime('%m/%d/%Y %I:%M:%S %p CST')
-                        except (ValueError, OverflowError):
-                            # If not epoch, keep as is
-                            formatted_time = ban_time
-                        
-                        ban_data.append({
-                            'ip': ip,
-                            'ban_end_time': formatted_time,
-                            'jail': jail
-                        })
-            
-            return ban_data
-        else:
-            logger.debug(f"Command failed with error code {result.returncode}: {result.stderr}")
-            return []
-            
-    except FileNotFoundError:
-        logger.debug("fail2ban-client command not found")
-        return []
-    except subprocess.TimeoutExpired:
-        logger.error("fail2ban-client command timed out")
-        return []
     except Exception as e:
         logger.error(f"Error getting banned IPs with times: {str(e)}")
         return []
