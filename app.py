@@ -285,7 +285,7 @@ def get_banned_ips_with_times():
         for jail in all_jails:
             try:
                 # Use the specific command format provided by the user
-                cmd = f"sudo fail2ban-client get {jail} banip --with-time | awk '{{print $1, $2, $3}}'"
+                cmd = f"sudo fail2ban-client get {jail} banip --with-time | awk '{{print $1, $7, $8}}'"
                 
                 result = subprocess.run(
                     cmd,
