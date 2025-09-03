@@ -82,7 +82,7 @@ fi
 
 # Check fail2ban version requirement
 echo "Checking fail2ban version..."
-fb_version=$(sudo fail2ban-client -V 2>&1 | grep -oP 'fail2ban v\K[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0")
+fb_version=$(sudo fail2ban-client -V 2>&1 | grep -oP '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "0.0.0")
 required_version="0.11.1"
 
 # Function to compare version strings
