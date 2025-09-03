@@ -80,6 +80,43 @@ else
     echo "Fail2ban service is running successfully."
 fi
 
+# Check fail2ban version requirement
+echo "Checking fail2ban version..."
+fb_version=$(sudo fail2ban-client -V 2>&1 | grep -oP 'fail2ban v\K[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0")
+required_version="0.11.1"
+
+# Function to compare version strings
+version_compare() {
+    local ver1=$1
+    local ver2=$2
+    
+    IFS='.' read -ra VER1 <<< "$ver1"
+    IFS='.' read -ra VER2 <<< "$ver2"
+    
+    # Compare major, minor, patch
+    for i in {0..2}; do
+        local num1=${VER1[i]:-0}
+        local num2=${VER2[i]:-0}
+        
+        if (( num1 > num2 )); then
+            return 0  # ver1 > ver2
+        elif (( num1 < num2 )); then
+            return 1  # ver1 < ver2
+        fi
+    done
+    
+    return 0  # versions are equal
+}
+
+if version_compare "$fb_version" "$required_version"; then
+    echo "Fail2ban version $fb_version meets minimum requirement ($required_version)"
+else
+    echo "Error: Fail2ban version $fb_version is below minimum requirement ($required_version)"
+    echo "Please update fail2ban to version $required_version or higher before continuing."
+    echo "You can try: sudo apt update && sudo apt install fail2ban"
+    exit 1
+fi
+
 # Create dedicated fail2ban-monitor user (no home directory)
 echo "Creating fail2ban-monitor user..."
 if ! id "fail2ban-monitor" &>/dev/null; then
