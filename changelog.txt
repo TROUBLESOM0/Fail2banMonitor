@@ -1,0 +1,40 @@
+FAIL2BAN MONITOR - CHANGELOG
+================================
+
+Version 1.0.1 (Current)
+-----------------------
+[Added]
+- "Current Bans" page showing banned IPs with expiration times
+- Navigation button to access Current Bans page from main dashboard
+- Color-coded jail badge system for visual distinction (red for SSH/databases, yellow for web servers, blue for CMS)
+- Copy-to-clipboard functionality for IP addresses with professional bubble notifications
+- Ban expiration time display using fail2ban-client commands with proper timezone handling
+- Fail2ban version check (minimum 0.11.1) in installation script
+
+[Fixed] 
+- Footer layout with centered current time display and right-aligned "Powered by" section
+- Data parsing issues in ban times functionality to properly separate jail names from expiration timestamps
+- Timezone display corrected to use server's local time (CST) without unnecessary conversion
+
+[Technical]
+- Updated fail2ban command parsing to use fields 7 and 8 for date/time extraction
+- Improved error handling for timestamp parsing and formatting
+- Enhanced jail detection across multiple fail2ban configurations
+
+Version 1.0.0 (Initial Release)
+-------------------------------
+[Added]
+- Complete Flask web application for fail2ban monitoring
+- Real-time dashboard showing banned IPs with hourly automatic updates
+- Automatic removal of IPs older than 1 week
+- AbuseIPDB integration for threat intelligence lookup
+- Professional Bootstrap-based UI with dark theme
+- Dedicated fail2ban-monitor user setup for security
+- Comprehensive Debian/Ubuntu installation script
+- Background scheduler for automated IP monitoring
+- SQLAlchemy database integration
+- Responsive design with mobile support
+- Service status monitoring and health checks
+- Professional logging and error handling
+- Nginx reverse proxy configuration
+- Systemd service integration
