@@ -48,7 +48,7 @@ fi
 # Confirm installation
 read -p "Do You Want To Proceed With Installation (y/N): " -n 1 -r
 echo
-if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+if [[ ! $REPLY =~ ^[yY]$ ]]; then
     echo "Installation cancelled."
     exit 0
 fi
