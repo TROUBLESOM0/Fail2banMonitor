@@ -1,7 +1,7 @@
 <!--
-    Fail2ban Banned IPs Monitor Dashboard
+    Fail2ban Ban Times Monitor - Current Bans with Expiration
     Version: v1.0.1
-    Description: Bootstrap-based responsive dashboard for displaying banned IP addresses
+    Description: Bootstrap-based responsive page for displaying current ban times
     Date: August 2025
 -->
 <!DOCTYPE html>
@@ -15,7 +15,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='img/favicon-16x16.png') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon-32x32.png') }}">
     
-    <title>Fail2ban Monitor</title>
+    <title>Current Bans - Fail2ban Monitor</title>
     
     <!-- Bootstrap CSS - Replit Dark Theme -->
     <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
@@ -35,14 +35,14 @@
         <div class="row mb-4">
             <div class="col-md-8">
                 <h1 class="display-4 mb-4">
-                    <i class="fas fa-shield-alt text-warning me-3"></i>
-                    Fail2ban Monitor
+                    <i class="fas fa-clock text-danger me-3"></i>
+                    Current Bans
                 </h1>
             </div>
             <div class="col-md-4 d-flex align-items-center justify-content-md-end">
-                <a href="/ban-times" class="btn btn-outline-info">
-                    <i class="fas fa-clock me-2"></i>
-                    Current Bans
+                <a href="/" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Back to Dashboard
                 </a>
             </div>
         </div>
@@ -50,50 +50,45 @@
         <!-- Alert Area -->
         <div id="alertArea"></div>
 
-        <!-- Banned IPs Table -->
+        <!-- Current Bans Table -->
         <div class="row mb-4">
             <div class="col">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title mb-0">
                             <i class="fas fa-table me-2"></i>
-                            Currently Banned IP Addresses
+                            Active IP Bans with Expiration Times
                         </h5>
                     </div>
                     <div class="card-body">
-                        {% if banned_ips %}
+                        {% if ban_data %}
                             <div class="table-responsive">
-                                <table id="bannedIpsTable" class="table table-striped table-hover">
+                                <table id="banTimesTable" class="table table-striped table-hover">
                                     <thead>
                                         <tr>
                                             <th>IP Address</th>
                                             <th>Jail</th>
-                                            <th>Banned Since</th>
+                                            <th>Ban Expires</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for ip in banned_ips %}
+                                        {% for ban in ban_data %}
                                         <tr>
                                             <td>
-                                                <code class="ip-address">{{ ip.ip_address if ip.ip_address else ip['ip_address'] }}</code>
+                                                <code class="ip-address">{{ ban.ip }}</code>
                                             </td>
                                             <td>
-                                                {% set jail_name = ip.jail if ip.jail else ip['jail'] %}
-                                                <span class="badge {{ get_jail_color(jail_name) }}">{{ jail_name }}</span>
+                                                <span class="badge {{ get_jail_color(ban.jail) }}">{{ ban.jail }}</span>
                                             </td>
                                             <td>
                                                 <small class="text-muted">
-                                                    {% set banned_time = ip.banned_at if ip.banned_at else ip['banned_at'] %}
-                                                    {% if banned_time is string %}
-                                                        {{ banned_time[:19] | replace('T', ' ') }} UTC
-                                                    {% else %}
-                                                        {{ banned_time.strftime('%Y-%m-%d %H:%M:%S UTC') }}
-                                                    {% endif %}
+                                                    <i class="fas fa-clock me-1"></i>
+                                                    {{ ban.ban_end_time }}
                                                 </small>
                                             </td>
                                             <td>
-                                                <a href="https://abuseipdb.com/check/{{ ip.ip_address if ip.ip_address else ip['ip_address'] }}" 
+                                                <a href="https://abuseipdb.com/check/{{ ban.ip }}" 
                                                    target="_blank" 
                                                    class="btn btn-sm btn-outline-warning"
                                                    title="Check threat intelligence on AbuseIPDB">
@@ -109,12 +104,12 @@
                         {% else %}
                             <div class="text-center py-5">
                                 <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
-                                <h4>No Banned IPs</h4>
+                                <h4>No Active Bans</h4>
                                 <p class="text-muted">
                                     {% if service_status.running %}
                                         Great! No IP addresses are currently banned by Fail2ban.
                                     {% else %}
-                                        Unable to retrieve banned IPs. Please check Fail2ban service status.
+                                        Unable to retrieve ban information. Please check Fail2ban service status.
                                     {% endif %}
                                 </p>
                             </div>
@@ -126,7 +121,7 @@
 
         <!-- Status Cards -->
         <div class="row mb-4">
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">
@@ -138,9 +133,6 @@
                                 <i class="fas fa-check-circle me-1"></i>
                                 Running
                             </span>
-                            {% if service_status.version %}
-                                <small class="text-muted d-block mt-1">{{ service_status.version }}</small>
-                            {% endif %}
                         {% else %}
                             <span class="badge bg-danger fs-6">
                                 <i class="fas fa-exclamation-circle me-1"></i>
@@ -152,45 +144,17 @@
                 </div>
             </div>
             
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">
                             <i class="fas fa-ban me-2"></i>
-                            Banned IPs
+                            Total Active Bans
                         </h5>
-                        <span class="badge bg-info fs-6">
+                        <span class="badge bg-danger fs-6">
                             <i class="fas fa-list me-1"></i>
-                            {{ banned_ips|length }} IPs
+                            {{ total_bans }} Active
                         </span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="fas fa-clock me-2"></i>
-                            Last Update
-                        </h5>
-                        {% if last_updated %}
-                            <small class="text-muted">{{ last_updated }}</small>
-                        {% else %}
-                            <small class="text-muted">Never</small>
-                        {% endif %}
-                        <div class="mt-2">
-                            <small class="text-muted d-block">
-                                <i class="fas fa-hourglass-half me-1"></i>
-                                Next update: <span id="countdown-display">Loading...</span>
-                            </small>
-                        </div>
-                        <div class="mt-2">
-                            <button id="refreshBtn" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-sync-alt me-1"></i>
-                                Refresh Now
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -231,5 +195,31 @@
     
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTables for ban times
+            $('#banTimesTable').DataTable({
+                responsive: true,
+                pageLength: 25,
+                order: [[2, 'asc']], // Sort by ban expiration time ascending
+                columnDefs: [
+                    {
+                        targets: 3, // Actions column
+                        orderable: false,
+                        searchable: false
+                    }
+                ],
+                language: {
+                    search: "Search Bans:",
+                    lengthMenu: "Show _MENU_ bans per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ active bans",
+                    infoEmpty: "No active bans found",
+                    infoFiltered: "(filtered from _MAX_ total bans)",
+                    emptyTable: "No active bans currently in the system"
+                }
+            });
+        });
+    </script>
 </body>
 </html>

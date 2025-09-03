@@ -271,6 +271,66 @@ def update_banned_ips():
     except Exception as e:
         logger.error(f"Error updating banned IPs: {str(e)}")
 
+def get_banned_ips_with_times():
+    """Get banned IPs with their ban expiration times"""
+    try:
+        # Use the specific command provided by the user
+        cmd = ["sudo", "fail2ban-client", "get", "sshd", "banip", "--with-time"]
+        
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            env={'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'}
+        )
+        
+        if result.returncode == 0:
+            # Parse the output using awk equivalent
+            lines = result.stdout.strip().split('\n')
+            ban_data = []
+            
+            for line in lines:
+                if line.strip():
+                    # Split by whitespace and take first 3 fields: IP, timestamp, jail
+                    parts = line.strip().split()
+                    if len(parts) >= 3:
+                        ip = parts[0]
+                        ban_time = parts[1]
+                        jail = parts[2]
+                        
+                        # Convert timestamp to readable format
+                        try:
+                            # Assume timestamp is in epoch format
+                            ban_time_dt = datetime.fromtimestamp(float(ban_time), tz=pytz.UTC)
+                            central_tz = pytz.timezone('America/Chicago')
+                            ban_time_central = ban_time_dt.astimezone(central_tz)
+                            formatted_time = ban_time_central.strftime('%m/%d/%Y %I:%M:%S %p CST')
+                        except (ValueError, OverflowError):
+                            # If not epoch, keep as is
+                            formatted_time = ban_time
+                        
+                        ban_data.append({
+                            'ip': ip,
+                            'ban_end_time': formatted_time,
+                            'jail': jail
+                        })
+            
+            return ban_data
+        else:
+            logger.debug(f"Command failed with error code {result.returncode}: {result.stderr}")
+            return []
+            
+    except FileNotFoundError:
+        logger.debug("fail2ban-client command not found")
+        return []
+    except subprocess.TimeoutExpired:
+        logger.error("fail2ban-client command timed out")
+        return []
+    except Exception as e:
+        logger.error(f"Error getting banned IPs with times: {str(e)}")
+        return []
+
 def get_fail2ban_status():
     """Check if fail2ban service is running"""
     try:
@@ -377,6 +437,27 @@ def index():
                              unique_jails=0,
                              jail_stats={},
                              last_updated=None)
+
+@app.route('/ban-times')
+def ban_times():
+    """Page showing current banned IPs with their ban expiration times"""
+    try:
+        # Get banned IPs with expiration times
+        ban_data = get_banned_ips_with_times()
+        
+        # Get service status
+        service_status = get_fail2ban_status()
+        
+        return render_template('ban_times.html',
+                             ban_data=ban_data,
+                             service_status=service_status,
+                             total_bans=len(ban_data))
+    except Exception as e:
+        logger.error(f"Error loading ban times page: {str(e)}")
+        return render_template('ban_times.html',
+                             ban_data=[],
+                             service_status={'running': False, 'error': str(e)},
+                             total_bans=0)
 
 @app.route('/api/banned-ips')
 def api_banned_ips():
