@@ -234,14 +234,15 @@ def update_banned_ips():
                     "ip_address": ip,
                     "jail": jail,
                     "banned_at": actual_ban_time,
-                    "abuse_url": f"https://abuseipdb.com/check/{ip}"
+                    "abuse_url": f"https://abuseipdb.com/check/{ip}",
+                    "ban_count": 1  # Initialize ban count for new records
                 }
                 all_ips.append(ip_record)
         
         # Load existing data
         existing_data = load_banned_ips_from_file()
         
-        # Clean up old entries (older than 1 week)
+        # Clean up old entries (older than 1 week) and ensure ban_count exists
         one_week_ago = current_time - timedelta(weeks=1)
         cleaned_ips = []
         
@@ -249,22 +250,42 @@ def update_banned_ips():
             try:
                 banned_time = datetime.fromisoformat(ip_record["banned_at"])
                 if banned_time > one_week_ago:
+                    # Ensure ban_count field exists (for backward compatibility)
+                    if "ban_count" not in ip_record:
+                        ip_record["ban_count"] = 1
                     cleaned_ips.append(ip_record)
             except:
-                # Keep records with invalid dates
+                # Keep records with invalid dates and ensure ban_count exists
+                if "ban_count" not in ip_record:
+                    ip_record["ban_count"] = 1
                 cleaned_ips.append(ip_record)
         
-        # Merge current IPs with existing ones (avoid duplicates)
-        existing_ip_keys = set()
+        # Merge current IPs with existing ones and track ban counts
+        existing_ip_map = {}
         for ip_record in cleaned_ips:
             key = f"{ip_record['ip_address']}_{ip_record['jail']}"
-            existing_ip_keys.add(key)
+            existing_ip_map[key] = ip_record
         
-        # Add new IPs that aren't already tracked
+        # Process currently banned IPs
         for ip_record in all_ips:
             key = f"{ip_record['ip_address']}_{ip_record['jail']}"
-            if key not in existing_ip_keys:
-                cleaned_ips.append(ip_record)
+            if key in existing_ip_map:
+                # IP already exists - increment ban count and update ban time if it's a new ban
+                existing_record = existing_ip_map[key]
+                existing_ban_time = datetime.fromisoformat(existing_record["banned_at"])
+                current_ban_time = datetime.fromisoformat(ip_record["banned_at"])
+                
+                # If this is a new ban (different time), increment count and update time
+                if abs((current_ban_time - existing_ban_time).total_seconds()) > 60:  # Allow 1 minute tolerance
+                    existing_record["ban_count"] += 1
+                    existing_record["banned_at"] = ip_record["banned_at"]
+                    logger.info(f"Incremented ban count for {ip_record['ip_address']} in {ip_record['jail']} to {existing_record['ban_count']}")
+            else:
+                # New IP - add to the list
+                existing_ip_map[key] = ip_record
+        
+        # Convert back to list
+        cleaned_ips = list(existing_ip_map.values())
         
         # Save updated data
         updated_data = {

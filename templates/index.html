@@ -77,6 +77,12 @@
                                         <tr>
                                             <td>
                                                 <code class="ip-address">{{ ip.ip_address if ip.ip_address else ip['ip_address'] }}</code>
+                                                {% set ban_count = ip.ban_count if ip.ban_count else ip['ban_count'] if ip['ban_count'] else 1 %}
+                                                {% if ban_count > 1 %}
+                                                    <span class="badge bg-danger ms-2" title="This IP has been banned {{ ban_count }} times">
+                                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ ban_count }}x
+                                                    </span>
+                                                {% endif %}
                                             </td>
                                             <td>
                                                 {% set jail_name = ip.jail if ip.jail else ip['jail'] %}
