@@ -1,7 +1,7 @@
 FAIL2BAN MONITOR - CHANGELOG
 ================================
 
-Version 2.0.2 (Current)
+Version 2.0.3 (Current)
 -----------------------
 [Added]
 - "Current Bans" page showing banned IPs with expiration times
