@@ -114,6 +114,7 @@ else
     echo "Error: Fail2ban version $fb_version is below minimum requirement ($required_version)"
     echo "Please update fail2ban to version $required_version or higher before continuing."
     echo "You can try: sudo apt update && sudo apt install fail2ban"
+    echo "Or download v1.0.0 (https://github.com/TROUBLESOM0/Fail2banMonitor/archive/refs/tags/v1.0.0.zip)"
     exit 1
 fi
 
