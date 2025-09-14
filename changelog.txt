@@ -24,6 +24,9 @@ Version 2.1.0 (Current)
 - Implemented actual ban time retrieval using fail2ban-client --with-time commands
 - Corrected ban start time parsing to use fields 2 and 3 instead of fields 7 and 8
 
+Version 2.0.0 (Skipped)
+-----------------------
+
 Version 1.0.0 (Initial Release)
 -------------------------------
 [Added]
