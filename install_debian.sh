@@ -54,8 +54,8 @@ if [[ ! $REPLY =~ ^[yY]$ ]]; then
 fi
 
 # Update system packages
-echo "Updating system packages..."
-sudo apt update && sudo apt upgrade -y
+#echo "Updating system packages..."
+#sudo apt update && sudo apt upgrade -y
 
 # Install required system packages
 echo "Installing system dependencies..."
