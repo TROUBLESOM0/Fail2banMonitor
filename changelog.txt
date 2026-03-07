@@ -6,6 +6,12 @@ Version 2.1.1 (Current)
 [Added]
 - 
 
+[Fixed]
+- Readme file displayed correctly on github.com
+
+[Technical]
+- 
+
 Version 2.1.0
 -----------------------
 [Added]
