@@ -4,13 +4,13 @@ FAIL2BAN MONITOR - CHANGELOG
 Version 2.1.1 (Current)
 -----------------------
 [Added]
-- 
+- Nothing new
 
 [Fixed]
 - Readme file displayed correctly on github.com
 
 [Technical]
-- 
+- Increased gunicorn timeout to 60sec
 
 Version 2.1.0
 -----------------------
