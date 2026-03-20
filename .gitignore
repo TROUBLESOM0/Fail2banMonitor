@@ -216,3 +216,7 @@ yarn-error.log*
 # Runtime files
 *.pid
 *.sock
+
+# Local files for syncing
+Sync-With-Github.sh
+Update-Version_F2ban-Monitor.sh

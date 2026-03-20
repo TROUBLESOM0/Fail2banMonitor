@@ -1,9 +1,9 @@
 #!/bin/bash
 #
 # Fail2ban Banned IPs Monitor - Debian Uninstallation Script
-# Version: v2.1.0
+# Version: v2.1.1
 # Description: Automated uninstallation script for Debian/Ubuntu systems
-# Date: August 2025
+# Date: March 2026
 #
 
 # Fail2ban Monitor Uninstall Script for Debian Linux
