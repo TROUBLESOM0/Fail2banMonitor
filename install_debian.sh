@@ -54,8 +54,8 @@ if [[ ! $REPLY =~ ^[yY]$ ]]; then
 fi
 
 # Update system packages
-echo "Updating system packages..."
-sudo apt update && sudo apt upgrade -y
+#echo "Updating system packages..."
+#sudo apt update && sudo apt upgrade -y
 
 # Install required system packages
 echo "Installing system dependencies..."
@@ -177,7 +177,7 @@ Group=fail2ban-monitor
 WorkingDirectory=$APP_DIR
 Environment=PATH=$APP_DIR/venv/bin
 EnvironmentFile=$APP_DIR/.env
-ExecStart=$APP_DIR/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 2 main:app
+ExecStart=$APP_DIR/venv/bin/gunicorn --timeout 60 --bind 127.0.0.1:5000 --workers 2 main:app
 Restart=always
 RestartSec=10
 
